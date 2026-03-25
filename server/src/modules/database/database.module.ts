@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { TOKENS } from 'src/common/constants';
+import * as userSchema from '../users/schemas';
 
 @Module({
   providers: [
@@ -14,7 +15,9 @@ import { TOKENS } from 'src/common/constants';
         });
 
         return drizzle(pool, {
-          schema: {},
+          schema: {
+            ...userSchema,
+          },
         });
       },
       inject: [ConfigService],

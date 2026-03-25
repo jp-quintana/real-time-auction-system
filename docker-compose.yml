@@ -22,10 +22,18 @@ services:
       # REDIS_URL: redis://redis-server:6379
     command: npm run start:dev
     depends_on:
-      - db
-      - redis-server
+      redis-server:
+        condition: service_started
+      db:
+        condition: service_healthy
+
   db:
     image: postgres:16-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     env_file: .env
     environment:
       POSTGRES_USER: ${DB_USER}
