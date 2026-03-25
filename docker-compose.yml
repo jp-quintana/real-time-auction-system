@@ -1,5 +1,29 @@
 name: real-time-auction-system
 services:
+  server:
+    build: ./server
+    ports:
+      - "3000:3000"
+    volumes:
+      # - ./server:/app
+      - /app/node_modules
+    develop:
+      watch:
+        - path: ./server/package.json
+          action: rebuild
+        - path: ./server
+          target: /app
+          action: sync
+    env_file:
+      - .env
+      - ./server/.env
+    environment:
+      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      # REDIS_URL: redis://redis-server:6379
+    command: npm run start:dev
+    depends_on:
+      - db
+      - redis-server
   db:
     image: postgres:16-alpine
     env_file: .env
@@ -15,7 +39,7 @@ services:
     image: redis:7.4-alpine
     env_file: .env
     ports:
-      - "${REDIS_SERVER_PORT}:6379"
+      - "${REDIS_PORT}:6379"
     volumes:
       - redis_data:/data
 
