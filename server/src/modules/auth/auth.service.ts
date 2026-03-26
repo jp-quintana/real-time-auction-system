@@ -1,4 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUserDto } from '../users/dtos';
 import { JwtPayload } from 'src/common/types';
 import { JwtService } from '@nestjs/jwt';
@@ -8,6 +13,7 @@ import * as bcrypt from 'bcrypt';
 import { TOKENS } from 'src/common/constants';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as sessionsSchema from './schemas';
+import { LoginUserDto } from './dtos';
 
 @Injectable()
 export class AuthService {
@@ -83,5 +89,41 @@ export class AuthService {
         refreshTokenExpiresAt,
       };
     });
+  }
+
+  async login(loginUserDto: LoginUserDto) {
+    const user = await this.usersService.findOneByEmail(loginUserDto.email);
+
+    const isPasswordValid = await bcrypt.compare(
+      loginUserDto.password,
+      user.password,
+    );
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException();
+    }
+
+    const payload = { userId: user.id, email: user.email };
+
+    const {
+      accessToken,
+      refreshToken,
+      hashedRefreshToken,
+      accessTokenExpiresAt,
+      refreshTokenExpiresAt,
+    } = await this.generateTokens(payload);
+
+    await this.db.insert(sessionsSchema.sessions).values({
+      hashedRefreshToken,
+      expiresAt: refreshTokenExpiresAt,
+      userId: user.id,
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+      accessTokenExpiresAt,
+      refreshTokenExpiresAt,
+    };
   }
 }

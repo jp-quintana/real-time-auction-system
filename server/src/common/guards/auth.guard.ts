@@ -28,8 +28,6 @@ export class AuthGuard implements CanActivate {
         secret: this.configService.getOrThrow('ACCESS_TOKEN_SECRET'),
       });
 
-      console.log({ payload });
-
       request['user'] = { ...payload, accessToken: token };
     } catch (error) {
       throw new UnauthorizedException();

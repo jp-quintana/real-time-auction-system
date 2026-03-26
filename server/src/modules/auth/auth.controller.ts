@@ -4,6 +4,7 @@ import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
 import { AuthTokens } from 'src/common/types';
+import { LoginUserDto } from './dtos';
 
 @Controller('auth')
 export class AuthController {
@@ -38,6 +39,18 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const payload = await this.authService.register(createUserDto);
+
+    this.setCookies(res, payload);
+
+    return { message: 'Success!' };
+  }
+
+  @Post('login')
+  async login(
+    @Body() loginUserDto: LoginUserDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const payload = await this.authService.login(loginUserDto);
 
     this.setCookies(res, payload);
 
