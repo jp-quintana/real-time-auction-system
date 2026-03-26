@@ -3,6 +3,7 @@ import { TOKENS } from 'src/common/constants';
 import * as usersSchema from './schemas';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CreateUserDto } from './dtos';
+import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class UsersService {
@@ -13,6 +14,16 @@ export class UsersService {
 
   async findAll() {
     return this.db.query.users.findMany();
+  }
+
+  async findOneById(id: string) {
+    return this.db.query.users.findFirst({
+      where: eq(usersSchema.users.id, id),
+      columns: {
+        id: true,
+        email: true,
+      },
+    });
   }
 
   async create(createUserDto: CreateUserDto, tx?: any) {
