@@ -8,6 +8,27 @@
       "when": 1774410424832,
       "tag": "0000_misty_thunderbird",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774464534370,
+      "tag": "0001_glorious_storm",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774469027209,
+      "tag": "0002_fancy_zarek",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1774480727845,
+      "tag": "0003_zippy_husk",
+      "breakpoints": true
     }
   ]
 }
