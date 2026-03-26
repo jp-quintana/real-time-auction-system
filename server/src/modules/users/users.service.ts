@@ -31,7 +31,7 @@ export class UsersService {
   async findOneByEmail(email: string, tx?: any) {
     const db = tx || this.db;
 
-    const user = db.query.users.findFirst({
+    const user = await db.query.users.findFirst({
       where: eq(usersSchema.users.email, email),
     });
 

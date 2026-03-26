@@ -8,10 +8,10 @@ declare global {
         email: string;
         iat: number;
         exp: number;
+        sessionId?: string;
+        refreshToken?: string;
         // accessToken?: string;
       };
-      // refreshToken?: string;
-      // isRefreshTokenExpired?: boolean;
     }
   }
 }

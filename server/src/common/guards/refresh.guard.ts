@@ -9,12 +9,11 @@ import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class RefreshGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
-
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractToken(request);
@@ -25,22 +24,22 @@ export class AuthGuard implements CanActivate {
 
     try {
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.getOrThrow('ACCESS_TOKEN_SECRET'),
+        secret: this.configService.getOrThrow('REFRESH_TOKEN_SECRET'),
+        ignoreExpiration: true,
       });
 
-      request['user'] = { ...payload };
-    } catch (error) {
+      request['user'] = { ...payload, refreshToken: token };
+    } catch (err) {
       throw new UnauthorizedException();
     }
     return true;
   }
 
   private extractToken(request: Request) {
-    if (request.cookies?.accessToken) {
-      return request.cookies.accessToken;
-    }
-
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
+    if (request.cookies.refreshToken)
+      return request.cookies.refreshToken as string;
+    if (request.headers['refresh-token'])
+      return request.headers['refresh-token'] as string;
+    return undefined;
   }
 }

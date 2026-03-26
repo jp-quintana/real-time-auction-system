@@ -4,10 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
-
-type AuthUser = {
-  userId: string;
-};
+import type { AuthUser } from '../types';
 
 export const CurrentUser = createParamDecorator(
   (data: keyof AuthUser | undefined, ctx: ExecutionContext) => {
@@ -17,6 +14,6 @@ export const CurrentUser = createParamDecorator(
       throw new UnauthorizedException();
     }
 
-    return data ? request.user[data] : request.user;
+    return data && request.user[data] ? request.user[data] : request.user;
   },
 );

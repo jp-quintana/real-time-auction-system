@@ -4,7 +4,7 @@ import { timestamps } from 'src/common/schemas';
 import { users } from 'src/modules/users/schemas';
 
 export const sessions = pgTable('sessions', {
-  id: uuid('id').primaryKey().defaultRandom(),
+  id: uuid('id').primaryKey(),
   hashedRefreshToken: text('hashed_refresh_token').notNull(),
   expiresAt: timestamp('expires_at').notNull(),
   userId: uuid('user_id').references(() => users.id),

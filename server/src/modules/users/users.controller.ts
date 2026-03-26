@@ -13,7 +13,7 @@ export class UsersController {
 
   @Get('profile')
   @UseGuards(AuthGuard)
-  getProfile(@CurrentUser('userId') userId: string) {
-    return this.usersService.findOneById(userId);
+  getProfile(@CurrentUser('userId') requestUserId: string) {
+    return this.usersService.findOneById(requestUserId);
   }
 }
