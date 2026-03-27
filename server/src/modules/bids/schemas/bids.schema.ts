@@ -15,13 +15,13 @@ export const bids = pgTable(
     auctionId: uuid('auction_id')
       .references(() => auctions.id, { onDelete: 'cascade' })
       .notNull(),
-    userId: uuid('user_id')
-      .references(() => users.id, { onDelete: 'set null' })
-      .notNull(),
+    userId: uuid('user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
     ...timestamps,
   },
   (table) => [
-    index('bids_auction_amount_idx').on(table.auctionId, table.amount),
+    index('bids_auction_amount_idx').on(table.auctionId, table.amount.desc()),
   ],
 );
 

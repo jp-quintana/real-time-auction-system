@@ -2,6 +2,7 @@ import { relations } from 'drizzle-orm';
 import { numeric } from 'drizzle-orm/pg-core';
 import { pgTable, uuid, timestamp, pgEnum } from 'drizzle-orm/pg-core';
 import { timestamps } from 'src/common/schemas';
+import { bids } from 'src/modules/bids/schemas';
 import { items } from 'src/modules/items/schemas';
 
 export const statusEnum = pgEnum('status', ['active', 'closed', 'cancelled']);
@@ -21,9 +22,10 @@ export const auctions = pgTable('auctions', {
   ...timestamps,
 });
 
-export const auctionRelations = relations(auctions, ({ one }) => ({
+export const auctionRelations = relations(auctions, ({ one, many }) => ({
   item: one(items, {
     fields: [auctions.itemId],
     references: [items.id],
   }),
+  bids: many(bids),
 }));

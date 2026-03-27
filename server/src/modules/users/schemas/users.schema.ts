@@ -3,6 +3,7 @@ import { pgEnum } from 'drizzle-orm/pg-core';
 import { pgTable, uuid, text } from 'drizzle-orm/pg-core';
 import { timestamps } from 'src/common/schemas';
 import { sessions } from 'src/modules/auth/schemas';
+import { bids } from 'src/modules/bids/schemas';
 import { items } from 'src/modules/items/schemas';
 
 export const roleEnum = pgEnum('role', ['user', 'admin']);
@@ -18,4 +19,5 @@ export const users = pgTable('users', {
 export const userRelations = relations(users, ({ many }) => ({
   sessions: many(sessions),
   items: many(items),
+  bids: many(bids),
 }));
