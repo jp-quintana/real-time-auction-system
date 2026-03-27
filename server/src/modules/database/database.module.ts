@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { TOKENS } from 'src/common/constants';
+import * as usersSchema from '../users/schemas';
+import * as sessionsSchema from '../auth/schemas';
 
 @Module({
   providers: [
@@ -14,11 +16,15 @@ import { TOKENS } from 'src/common/constants';
         });
 
         return drizzle(pool, {
-          schema: {},
+          schema: {
+            ...usersSchema,
+            ...sessionsSchema,
+          },
         });
       },
       inject: [ConfigService],
     },
   ],
+  exports: [TOKENS.INFRA.DATABASE_CONNECTION],
 })
 export class DatabaseModule {}
