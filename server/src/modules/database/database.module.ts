@@ -7,6 +7,7 @@ import * as usersSchema from '../users/schemas';
 import * as sessionsSchema from '../auth/schemas';
 import * as itemsSchema from '../items/schemas';
 import * as auctionsSchema from '../auctions/schemas';
+import * as bidsSchema from '../bids/schemas';
 
 @Module({
   providers: [
@@ -23,6 +24,7 @@ import * as auctionsSchema from '../auctions/schemas';
             ...sessionsSchema,
             ...itemsSchema,
             ...auctionsSchema,
+            ...bidsSchema,
           },
         });
       },
