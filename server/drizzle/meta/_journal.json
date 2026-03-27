@@ -57,6 +57,13 @@
       "when": 1774586204547,
       "tag": "0007_youthful_titania",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1774640087958,
+      "tag": "0008_large_sharon_carter",
+      "breakpoints": true
     }
   ]
 }

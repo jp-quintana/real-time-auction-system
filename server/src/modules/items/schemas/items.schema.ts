@@ -7,7 +7,9 @@ export const items = pgTable('items', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: text('title'),
   description: text('description'),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
   ...timestamps,
 });
 
