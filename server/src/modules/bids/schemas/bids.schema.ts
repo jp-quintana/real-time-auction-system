@@ -15,7 +15,7 @@ export const bids = pgTable(
     auctionId: uuid('auction_id')
       .references(() => auctions.id, { onDelete: 'cascade' })
       .notNull(),
-    userId: uuid('user_id').references(() => users.id, {
+    bidderId: uuid('bidder_id').references(() => users.id, {
       onDelete: 'set null',
     }),
     ...timestamps,
@@ -31,7 +31,7 @@ export const bidRelations = relations(bids, ({ one }) => ({
     references: [auctions.id],
   }),
   user: one(users, {
-    fields: [bids.userId],
+    fields: [bids.bidderId],
     references: [users.id],
   }),
 }));

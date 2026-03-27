@@ -8,7 +8,7 @@ export const items = pgTable('items', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: text('title').notNull(),
   description: text('description'),
-  userId: uuid('user_id')
+  sellerId: uuid('seller_id')
     .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   ...timestamps,
@@ -16,7 +16,7 @@ export const items = pgTable('items', {
 
 export const itemRelations = relations(items, ({ one, many }) => ({
   user: one(users, {
-    fields: [items.userId],
+    fields: [items.sellerId],
     references: [users.id],
   }),
   auctions: many(auctions),

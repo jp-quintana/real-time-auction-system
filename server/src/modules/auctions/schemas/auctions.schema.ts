@@ -13,9 +13,9 @@ export const auctions = pgTable('auctions', {
     precision: 10,
     scale: 2,
   }).notNull(),
-  startTime: timestamp('start_time').defaultNow(),
+  startTime: timestamp('start_time').defaultNow().notNull(),
   endTime: timestamp('end_time').notNull(),
-  status: statusEnum().default('active'),
+  status: statusEnum().default('active').notNull(),
   itemId: uuid('item_id')
     .references(() => items.id, { onDelete: 'cascade' })
     .notNull(),
