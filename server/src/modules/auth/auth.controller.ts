@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  InternalServerErrorException,
   Post,
   Res,
   UnauthorizedException,

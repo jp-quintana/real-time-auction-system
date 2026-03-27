@@ -5,6 +5,9 @@ import { Pool } from 'pg';
 import { TOKENS } from 'src/common/constants';
 import * as usersSchema from '../users/schemas';
 import * as sessionsSchema from '../auth/schemas';
+import * as itemsSchema from '../items/schemas';
+import * as auctionsSchema from '../auctions/schemas';
+import * as bidsSchema from '../bids/schemas';
 
 @Module({
   providers: [
@@ -19,6 +22,9 @@ import * as sessionsSchema from '../auth/schemas';
           schema: {
             ...usersSchema,
             ...sessionsSchema,
+            ...itemsSchema,
+            ...auctionsSchema,
+            ...bidsSchema,
           },
         });
       },

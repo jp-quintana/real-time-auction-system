@@ -36,6 +36,48 @@
       "when": 1774539034464,
       "tag": "0004_material_wrecker",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1774579856125,
+      "tag": "0005_giant_meltdown",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1774585256553,
+      "tag": "0006_flowery_matthew_murdock",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1774586204547,
+      "tag": "0007_youthful_titania",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1774640087958,
+      "tag": "0008_large_sharon_carter",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1774642104590,
+      "tag": "0009_concerned_mole_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1774643083705,
+      "tag": "0010_grey_triton",
+      "breakpoints": true
     }
   ]
 }
