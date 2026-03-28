@@ -11,6 +11,7 @@ export class ItemsService {
     private readonly db: NodePgDatabase<typeof itemsSchema>,
   ) {}
 
+  async findAll() {}
   async create(createItemDto: CreateItemDto) {
     return this.db.insert(itemsSchema.items).values(createItemDto).returning();
   }

@@ -1,4 +1,4 @@
-import { IsString, MinLength } from 'class-validator';
+import { Allow, IsString, MinLength } from 'class-validator';
 import * as itemsSchema from '../schemas';
 
 type Item = typeof itemsSchema.items.$inferInsert;
@@ -11,5 +11,6 @@ export class CreateItemDto implements Partial<Item> {
   @IsString()
   description: string;
 
+  @Allow()
   sellerId: string;
 }
