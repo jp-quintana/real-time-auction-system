@@ -9,7 +9,7 @@ import { Request } from 'express';
 import { adminRole } from '../types';
 
 @Injectable()
-export class AdminhGuard implements CanActivate {
+export class AdminGuard implements CanActivate {
   constructor() {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
