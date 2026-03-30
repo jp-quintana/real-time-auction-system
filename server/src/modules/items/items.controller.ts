@@ -1,15 +1,20 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ItemsService } from './items.service';
-import { AuthGuard } from 'src/common/guards';
+import { AdminGuard, AuthGuard } from 'src/common/guards';
 import { CurrentUser } from 'src/common/decorators';
 import { CreateItemDto } from './dtos';
+import { ItemsQueryDto } from './dtos/items-query.dto';
 
 @Controller('items')
 export class ItemsController {
   constructor(private readonly itemsService: ItemsService) {}
   @Get()
-  findAll() {
-    return this.itemsService.findAll();
+  @UseGuards(AuthGuard, AdminGuard)
+  findAll(@Query() itemsQueryDto: ItemsQueryDto) {
+    return this.itemsService.findAll(
+      itemsQueryDto.page,
+      itemsQueryDto.pageSize,
+    );
   }
 
   @Post()
