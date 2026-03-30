@@ -9,12 +9,9 @@ import { ItemsQueryDto } from './dtos/items-query.dto';
 export class ItemsController {
   constructor(private readonly itemsService: ItemsService) {}
   @Get()
-  @UseGuards(AuthGuard, AdminGuard)
+  @UseGuards(AuthGuard)
   findAll(@Query() itemsQueryDto: ItemsQueryDto) {
-    return this.itemsService.findAll(
-      itemsQueryDto.page,
-      itemsQueryDto.pageSize,
-    );
+    return this.itemsService.findAll(itemsQueryDto);
   }
 
   @Post()
