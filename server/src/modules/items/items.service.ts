@@ -27,6 +27,14 @@ export class ItemsService {
       orderBy: (items, { desc }) => desc(items.createdAt),
       limit: pageSize,
       offset: (page - 1) * pageSize,
+      with: {
+        seller: {
+          columns: {
+            id: true,
+            email: true,
+          },
+        },
+      },
     });
   }
 
