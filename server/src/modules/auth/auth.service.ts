@@ -66,7 +66,7 @@ export class AuthService {
       );
 
       const sessionId = crypto.randomUUID();
-      const payload = { userId: user.id, email: user.email };
+      const payload = { userId: user.id, email: user.email, role: user.role };
 
       const {
         accessToken,
@@ -109,7 +109,7 @@ export class AuthService {
     }
 
     const sessionId = crypto.randomUUID();
-    const payload = { userId: user.id, email: user.email };
+    const payload = { userId: user.id, email: user.email, role: user.role };
 
     const {
       accessToken,
@@ -165,7 +165,7 @@ export class AuthService {
       throw new TokenExpiredError('Refresh token has expired', now);
     }
 
-    const payload = { userId: user.id, email: user.email };
+    const payload = { userId: user.id, email: user.email, role: user.role };
 
     const {
       accessToken,

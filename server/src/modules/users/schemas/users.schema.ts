@@ -2,11 +2,12 @@ import { relations } from 'drizzle-orm';
 import { pgEnum } from 'drizzle-orm/pg-core';
 import { pgTable, uuid, text } from 'drizzle-orm/pg-core';
 import { timestamps } from 'src/common/schemas';
+import { roles } from 'src/common/types';
 import { sessions } from 'src/modules/auth/schemas';
 import { bids } from 'src/modules/bids/schemas';
 import { items } from 'src/modules/items/schemas';
 
-export const roleEnum = pgEnum('role', ['user', 'admin']);
+export const roleEnum = pgEnum('role', roles);
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
