@@ -30,7 +30,7 @@ export const bidRelations = relations(bids, ({ one }) => ({
     fields: [bids.auctionId],
     references: [auctions.id],
   }),
-  user: one(users, {
+  bidder: one(users, {
     fields: [bids.bidderId],
     references: [users.id],
   }),
