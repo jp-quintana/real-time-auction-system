@@ -62,6 +62,14 @@ export class ItemsService {
   async findOneById(itemId: string) {
     const item = await this.db.query.items.findFirst({
       where: eq(itemsSchema.items.id, itemId),
+      with: {
+        seller: {
+          columns: {
+            id: true,
+            email: true,
+          },
+        },
+      },
     });
 
     if (!item || item.deletedAt) throw new NotFoundException();
