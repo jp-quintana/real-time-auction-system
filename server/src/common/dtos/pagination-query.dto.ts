@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsNumber, IsOptional, IsPositive } from 'class-validator';
+import { IsNumber, IsOptional, IsPositive, Max } from 'class-validator';
 
 export class PaginationQueryDto {
   @IsOptional()
@@ -12,5 +12,6 @@ export class PaginationQueryDto {
   @Type(() => Number)
   @IsNumber()
   @IsPositive()
+  @Max(50)
   pageSize?: number;
 }
