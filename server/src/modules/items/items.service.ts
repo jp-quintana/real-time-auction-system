@@ -12,7 +12,7 @@ export class ItemsService {
     private readonly db: NodePgDatabase<typeof itemsSchema>,
   ) {}
 
-  async findAll(itemsQueryDto: ItemsQueryDto) {
+  async findAll(itemsQueryDto: ItemsQueryDto, withSeller = true) {
     const page = itemsQueryDto.page || 1;
     const pageSize = itemsQueryDto.pageSize || PAGINATION.DEFAULT_PAGE_SIZE;
 
@@ -26,6 +26,22 @@ export class ItemsService {
       orderBy: (items, { desc }) => desc(items.createdAt),
       limit: pageSize,
       offset: (page - 1) * pageSize,
+      with: withSeller
+        ? {
+            seller: {
+              columns: {
+                id: true,
+                email: true,
+              },
+            },
+          }
+        : undefined,
+    });
+  }
+
+  async findOneById(itemId: string) {
+    const item = await this.db.query.items.findFirst({
+      where: eq(itemsSchema.items.id, itemId),
       with: {
         seller: {
           columns: {
@@ -35,6 +51,10 @@ export class ItemsService {
         },
       },
     });
+
+    if (!item || item.deletedAt) throw new NotFoundException();
+
+    return item;
   }
 
   async create(createItemDto: CreateItemDto) {
@@ -57,23 +77,5 @@ export class ItemsService {
     if (!updated) throw new NotFoundException();
 
     return updated;
-  }
-
-  async findOneById(itemId: string) {
-    const item = await this.db.query.items.findFirst({
-      where: eq(itemsSchema.items.id, itemId),
-      with: {
-        seller: {
-          columns: {
-            id: true,
-            email: true,
-          },
-        },
-      },
-    });
-
-    if (!item || item.deletedAt) throw new NotFoundException();
-
-    return item;
   }
 }
