@@ -1,4 +1,10 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUserDto } from '../users/dtos';
 import { AuthUser, JwtPayload } from 'src/common/types';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
@@ -54,16 +60,24 @@ export class AuthService {
   }
 
   async register(createUserDto: CreateUserDto) {
-    let hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
     return await this.db.transaction(async (tx) => {
-      const [user] = await this.usersService.create(
-        {
-          ...createUserDto,
-          password: hashedPassword,
-        },
-        tx,
-      );
+      let user;
+      try {
+        [user] = await this.usersService.create(
+          {
+            ...createUserDto,
+            password: hashedPassword,
+          },
+          tx,
+        );
+      } catch (error) {
+        if (error.code === '23505') {
+          throw new ConflictException('Email already in use');
+        }
+        throw error;
+      }
 
       const sessionId = crypto.randomUUID();
       const payload = { userId: user.id, email: user.email, role: user.role };
@@ -98,6 +112,8 @@ export class AuthService {
 
   async login(loginUserDto: LoginUserDto) {
     const user = await this.usersService.findOneByEmail(loginUserDto.email);
+
+    if (!user || user.deletedAt) throw new NotFoundException();
 
     const isPasswordValid = await bcrypt.compare(
       loginUserDto.password,
@@ -136,6 +152,8 @@ export class AuthService {
 
   async refresh(authUser: AuthUser) {
     const user = await this.usersService.findOneById(authUser.userId);
+
+    if (!user || user.deletedAt) throw new NotFoundException();
 
     if (!authUser.refreshToken || !authUser.sessionId)
       throw new UnauthorizedException();

@@ -1,10 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { PAGINATION, TOKENS } from 'src/common/constants';
 import * as itemsSchema from './schemas';
-import { CreateItemDto } from './dtos';
+import { CreateItemDto, ItemsQueryDto, UpdateItemDto } from './dtos';
 import { and, eq, isNull } from 'drizzle-orm';
-import { ItemsQueryDto } from './dtos/items-query.dto';
 
 @Injectable()
 export class ItemsService {
@@ -40,5 +39,33 @@ export class ItemsService {
 
   async create(createItemDto: CreateItemDto) {
     return this.db.insert(itemsSchema.items).values(createItemDto).returning();
+  }
+
+  async update(itemId: string, sellerId: string, updateItemDto: UpdateItemDto) {
+    const [updated] = await this.db
+      .update(itemsSchema.items)
+      .set(updateItemDto)
+      .where(
+        and(
+          eq(itemsSchema.items.id, itemId),
+          eq(itemsSchema.items.sellerId, sellerId),
+          isNull(itemsSchema.items.deletedAt),
+        ),
+      )
+      .returning();
+
+    if (!updated) throw new NotFoundException();
+
+    return updated;
+  }
+
+  async findOneById(itemId: string) {
+    const item = await this.db.query.items.findFirst({
+      where: eq(itemsSchema.items.id, itemId),
+    });
+
+    if (!item || item.deletedAt) throw new NotFoundException();
+
+    return item;
   }
 }

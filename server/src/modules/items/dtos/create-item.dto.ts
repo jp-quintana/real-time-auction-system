@@ -10,7 +10,7 @@ export class CreateItemDto implements Partial<Item> {
 
   @IsOptional()
   @IsString()
-  description: string;
+  description?: string;
 
   @Allow()
   sellerId: string;

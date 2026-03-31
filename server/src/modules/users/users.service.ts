@@ -19,13 +19,17 @@ export class UsersService {
   async findOneById(id: string, tx?: any) {
     const db = tx || this.db;
 
-    return db.query.users.findFirst({
+    const user = db.query.users.findFirst({
       where: eq(usersSchema.users.id, id),
       columns: {
         id: true,
         email: true,
       },
     });
+
+    if (!user || user.deletedAt) throw new NotFoundException();
+
+    return user;
   }
 
   async findOneByEmail(email: string, tx?: any) {

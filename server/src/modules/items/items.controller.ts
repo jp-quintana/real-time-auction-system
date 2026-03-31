@@ -1,9 +1,17 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ItemsService } from './items.service';
 import { AdminGuard, AuthGuard } from 'src/common/guards';
 import { CurrentUser } from 'src/common/decorators';
-import { CreateItemDto } from './dtos';
-import { ItemsQueryDto } from './dtos/items-query.dto';
+import { CreateItemDto, ItemsQueryDto, UpdateItemDto } from './dtos';
 
 @Controller('items')
 export class ItemsController {
@@ -17,9 +25,22 @@ export class ItemsController {
   @Post()
   @UseGuards(AuthGuard)
   create(
-    @Body() body: CreateItemDto,
+    @Body() createItemDto: CreateItemDto,
     @CurrentUser('userId') requestUserId: string,
   ) {
-    return this.itemsService.create({ ...body, sellerId: requestUserId });
+    return this.itemsService.create({
+      ...createItemDto,
+      sellerId: requestUserId,
+    });
+  }
+
+  @Patch(':id')
+  @UseGuards(AuthGuard)
+  update(
+    @Param('id') id: string,
+    @Body() updateItemDto: UpdateItemDto,
+    @CurrentUser('userId') requestUserId: string,
+  ) {
+    return this.itemsService.update(id, requestUserId, updateItemDto);
   }
 }
