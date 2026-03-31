@@ -25,7 +25,7 @@ export class ItemsController {
   @Get(':id')
   @UseGuards(AuthGuard)
   findOneById(@Param('id') id: string) {
-    return this.itemsService.findOneById(id);
+    return this.itemsService.findOneById(id, { seller: true, auctions: true });
   }
 
   @Post()

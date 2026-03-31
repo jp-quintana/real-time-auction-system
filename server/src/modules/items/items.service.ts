@@ -12,7 +12,10 @@ export class ItemsService {
     private readonly db: NodePgDatabase<typeof itemsSchema>,
   ) {}
 
-  async findAll(itemsQueryDto: ItemsQueryDto, withSeller = true) {
+  async findAll(
+    itemsQueryDto: ItemsQueryDto,
+    relations: { seller?: boolean; auctions?: boolean } = { seller: true },
+  ) {
     const page = itemsQueryDto.page || 1;
     const pageSize = itemsQueryDto.pageSize || PAGINATION.DEFAULT_PAGE_SIZE;
 
@@ -26,29 +29,30 @@ export class ItemsService {
       orderBy: (items, { desc }) => desc(items.createdAt),
       limit: pageSize,
       offset: (page - 1) * pageSize,
-      with: withSeller
-        ? {
-            seller: {
-              columns: {
-                id: true,
-                email: true,
-              },
-            },
-          }
-        : undefined,
+      with: {
+        ...(relations.seller && {
+          seller: { columns: { id: true, email: true } },
+        }),
+        ...(relations.auctions && {
+          auctions: { columns: { id: true, status: true } },
+        }),
+      },
     });
   }
 
-  async findOneById(itemId: string) {
+  async findOneById(
+    itemId: string,
+    relations: { seller?: boolean; auctions?: boolean } = { seller: true },
+  ) {
     const item = await this.db.query.items.findFirst({
       where: eq(itemsSchema.items.id, itemId),
       with: {
-        seller: {
-          columns: {
-            id: true,
-            email: true,
-          },
-        },
+        ...(relations.seller && {
+          seller: { columns: { id: true, email: true } },
+        }),
+        ...(relations.auctions && {
+          auctions: { columns: { id: true, status: true } },
+        }),
       },
     });
 

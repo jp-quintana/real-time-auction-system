@@ -24,6 +24,9 @@ export class UsersController {
   @Get('me/items')
   @UseGuards(AuthGuard)
   getUserItems(@CurrentUser('userId') requestUserId: string) {
-    return this.itemsService.findAll({ sellerId: requestUserId }, false);
+    return this.itemsService.findAll(
+      { sellerId: requestUserId },
+      { seller: false, auctions: true },
+    );
   }
 }
