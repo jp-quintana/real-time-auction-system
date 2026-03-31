@@ -22,6 +22,12 @@ export class ItemsController {
     return this.itemsService.findAll(itemsQueryDto);
   }
 
+  @Get(':id')
+  @UseGuards(AuthGuard)
+  findOneById(@Param('id') id: string) {
+    return this.itemsService.findOneById(id);
+  }
+
   @Post()
   @UseGuards(AuthGuard)
   create(
