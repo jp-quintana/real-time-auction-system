@@ -4,6 +4,7 @@ import { PAGINATION, TOKENS } from 'src/common/constants';
 import * as itemsSchema from './schemas';
 import { CreateItemDto, ItemsQueryDto, UpdateItemDto } from './dtos';
 import { and, eq, isNull } from 'drizzle-orm';
+import { ItemsQueryRelations } from 'src/common/types';
 
 @Injectable()
 export class ItemsService {
@@ -14,7 +15,7 @@ export class ItemsService {
 
   async findAll(
     itemsQueryDto: ItemsQueryDto,
-    relations: { seller?: boolean; auctions?: boolean } = { seller: true },
+    relations: ItemsQueryRelations = { seller: true },
   ) {
     const page = itemsQueryDto.page || 1;
     const pageSize = itemsQueryDto.pageSize || PAGINATION.DEFAULT_PAGE_SIZE;
@@ -42,7 +43,7 @@ export class ItemsService {
 
   async findOneById(
     itemId: string,
-    relations: { seller?: boolean; auctions?: boolean } = { seller: true },
+    relations: ItemsQueryRelations = { seller: true },
   ) {
     const item = await this.db.query.items.findFirst({
       where: eq(itemsSchema.items.id, itemId),

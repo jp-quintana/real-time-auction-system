@@ -16,6 +16,7 @@ import { CreateItemDto, ItemsQueryDto, UpdateItemDto } from './dtos';
 @Controller('items')
 export class ItemsController {
   constructor(private readonly itemsService: ItemsService) {}
+
   @Get()
   @UseGuards(AuthGuard, AdminGuard)
   findAll(@Query() itemsQueryDto: ItemsQueryDto) {
