@@ -1,14 +1,14 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { TOKENS } from 'src/common/constants';
 import * as usersSchema from './schemas';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CreateUserDto } from './dtos';
 import { eq } from 'drizzle-orm';
+import { DATABASE_CONNECTION } from 'src/common/constants';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @Inject(TOKENS.INFRA.DATABASE_CONNECTION)
+    @Inject(DATABASE_CONNECTION)
     private readonly db: NodePgDatabase<typeof usersSchema>,
   ) {}
 

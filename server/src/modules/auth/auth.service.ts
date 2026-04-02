@@ -11,17 +11,17 @@ import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
-import { TOKENS } from 'src/common/constants';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as sessionsSchema from './schemas';
 import { LoginUserDto } from './dtos';
 import { eq } from 'drizzle-orm';
 import { parseTimeToMs } from 'src/common/helpers';
+import { DATABASE_CONNECTION } from 'src/common/constants';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject(TOKENS.INFRA.DATABASE_CONNECTION)
+    @Inject(DATABASE_CONNECTION)
     private readonly db: NodePgDatabase<typeof sessionsSchema>,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,

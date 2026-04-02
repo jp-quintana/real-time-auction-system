@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { PAGINATION, TOKENS } from 'src/common/constants';
+import { DATABASE_CONNECTION, DEFAULT_PAGE_SIZE } from 'src/common/constants';
 import * as itemsSchema from './schemas';
 import { CreateItemDto, ItemsQueryDto, UpdateItemDto } from './dtos';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -9,7 +9,7 @@ import { ItemsQueryRelations } from 'src/common/types';
 @Injectable()
 export class ItemsService {
   constructor(
-    @Inject(TOKENS.INFRA.DATABASE_CONNECTION)
+    @Inject(DATABASE_CONNECTION)
     private readonly db: NodePgDatabase<typeof itemsSchema>,
   ) {}
 
@@ -18,7 +18,7 @@ export class ItemsService {
     relations: ItemsQueryRelations = { seller: true },
   ) {
     const page = itemsQueryDto.page || 1;
-    const pageSize = itemsQueryDto.pageSize || PAGINATION.DEFAULT_PAGE_SIZE;
+    const pageSize = itemsQueryDto.pageSize || DEFAULT_PAGE_SIZE;
 
     return await this.db.query.items.findMany({
       where: and(

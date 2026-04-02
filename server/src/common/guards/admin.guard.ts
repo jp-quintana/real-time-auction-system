@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 
 import { Request } from 'express';
-import { adminRole } from '../types';
+import { ADMIN_ROLE } from '../constants';
 
 @Injectable()
 export class AdminGuard implements CanActivate {
@@ -15,7 +15,7 @@ export class AdminGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request: Request = context.switchToHttp().getRequest();
 
-    if (request.user?.role !== adminRole) throw new UnauthorizedException();
+    if (request.user?.role !== ADMIN_ROLE) throw new UnauthorizedException();
     return true;
   }
 }

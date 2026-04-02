@@ -1,0 +1,9 @@
+export const AUCTION_STATUS_ACTIVE = 'active';
+export const AUCTION_STATUS_CLOSED = 'closed';
+export const AUCTION_STATUS_CANCELLED = 'cancelled';
+
+export const AUCTION_STATUS_VALUES = [
+  AUCTION_STATUS_ACTIVE,
+  AUCTION_STATUS_CLOSED,
+  AUCTION_STATUS_CANCELLED,
+] as const;
