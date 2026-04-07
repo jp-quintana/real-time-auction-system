@@ -1,6 +1,6 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { AuthGuard } from 'src/common/guards';
+import { AdminGuard, AuthGuard } from 'src/common/guards';
 import { CurrentUser } from 'src/common/decorators';
 import { ItemsService } from '../items/items.service';
 
@@ -11,6 +11,7 @@ export class UsersController {
     private readonly itemsService: ItemsService,
   ) {}
   @Get()
+  @UseGuards(AuthGuard, AdminGuard)
   findAll() {
     return this.usersService.findAll();
   }
