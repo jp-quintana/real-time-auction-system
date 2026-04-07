@@ -62,6 +62,22 @@ export class ItemsService {
     return item;
   }
 
+  async lockByIdForUpdate(itemId: string, tx: any) {
+    const [item] = await tx
+      .select({
+        id: itemsSchema.items.id,
+        sellerId: itemsSchema.items.sellerId,
+        deletedAt: itemsSchema.items.deletedAt,
+      })
+      .from(itemsSchema.items)
+      .where(eq(itemsSchema.items.id, itemId))
+      .for('update');
+
+    if (!item || item.deletedAt) throw new NotFoundException();
+
+    return item;
+  }
+
   async create(sellerId: string, createItemDto: CreateItemDto) {
     return this.db
       .insert(itemsSchema.items)

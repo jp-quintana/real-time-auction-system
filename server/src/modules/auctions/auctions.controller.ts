@@ -1,6 +1,8 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { AuctionsService } from './auctions.service';
-import { AuctionsQueryDto } from './dtos';
+import { AuctionsQueryDto, CreateAuctionDto } from './dtos';
+import { AuthGuard } from 'src/common/guards';
+import { CurrentUser } from 'src/common/decorators';
 
 @Controller('auctions')
 export class AuctionsController {
@@ -18,17 +20,14 @@ export class AuctionsController {
   //   return this.itemsService.findOneById(id, { seller: true, auctions: true });
   // }
 
-  // @Post()
-  // @UseGuards(AuthGuard)
-  // create(
-  //   @Body() createItemDto: CreateItemDto,
-  //   @CurrentUser('userId') requestUserId: string,
-  // ) {
-  //   return this.itemsService.create({
-  //     ...createItemDto,
-  //     sellerId: requestUserId,
-  //   });
-  // }
+  @Post()
+  @UseGuards(AuthGuard)
+  create(
+    @Body() createAuctionDto: CreateAuctionDto,
+    @CurrentUser('userId') requestUserId: string,
+  ) {
+    return this.auctionsService.create(requestUserId, createAuctionDto);
+  }
 
   // @Patch(':id')
   // @UseGuards(AuthGuard)

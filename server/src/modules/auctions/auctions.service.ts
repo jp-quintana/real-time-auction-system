@@ -1,5 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { AuctionsQueryDto } from './dtos';
+import {
+  ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { AuctionsQueryDto, CreateAuctionDto } from './dtos';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as auctionsSchema from './schemas';
 import { and, eq, gte, isNull } from 'drizzle-orm';
@@ -11,12 +17,14 @@ import {
   DATABASE_CONNECTION,
   DEFAULT_PAGE_SIZE,
 } from 'src/common/constants';
+import { ItemsService } from '../items/items.service';
 
 @Injectable()
 export class AuctionsService {
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: NodePgDatabase<typeof auctionsSchema>,
+    private readonly itemsService: ItemsService,
   ) {}
 
   async findAll(
@@ -58,6 +66,42 @@ export class AuctionsService {
           bids: true,
         }),
       },
+    });
+  }
+
+  async create(sellerId: string, createAuctionDto: CreateAuctionDto) {
+    return this.db.transaction(async (tx) => {
+      const item = await this.itemsService.lockByIdForUpdate(
+        createAuctionDto.itemId,
+        tx,
+      );
+
+      if (!item) {
+        throw new NotFoundException('Item not found');
+      }
+
+      if (item.sellerId !== sellerId) {
+        throw new ForbiddenException('You do not own this item');
+      }
+
+      try {
+        const [auction] = await tx
+          .insert(auctionsSchema.auctions)
+          .values({
+            ...createAuctionDto,
+            startingPrice: createAuctionDto.startingPrice.toString(),
+          })
+          .returning();
+
+        return auction;
+      } catch (error: any) {
+        if (error.code === '23505') {
+          throw new ConflictException(
+            'An auction for this item is already active',
+          );
+        }
+        throw error;
+      }
     });
   }
 }
