@@ -35,10 +35,7 @@ export class ItemsController {
     @Body() createItemDto: CreateItemDto,
     @CurrentUser('userId') requestUserId: string,
   ) {
-    return this.itemsService.create({
-      ...createItemDto,
-      sellerId: requestUserId,
-    });
+    return this.itemsService.create(requestUserId, createItemDto);
   }
 
   @Patch(':id')

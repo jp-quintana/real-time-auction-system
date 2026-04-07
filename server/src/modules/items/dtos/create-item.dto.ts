@@ -1,9 +1,6 @@
-import { Allow, IsOptional, IsString, MinLength } from 'class-validator';
-import * as itemsSchema from '../schemas';
+import { IsOptional, IsString, MinLength } from 'class-validator';
 
-type Item = typeof itemsSchema.items.$inferInsert;
-
-export class CreateItemDto implements Partial<Item> {
+export class CreateItemDto {
   @IsString()
   @MinLength(3, { message: 'Title must be at least 3 characters long' })
   title: string;
@@ -11,7 +8,4 @@ export class CreateItemDto implements Partial<Item> {
   @IsOptional()
   @IsString()
   description?: string;
-
-  @Allow()
-  sellerId: string;
 }

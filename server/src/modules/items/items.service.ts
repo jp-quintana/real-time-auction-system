@@ -62,8 +62,11 @@ export class ItemsService {
     return item;
   }
 
-  async create(createItemDto: CreateItemDto) {
-    return this.db.insert(itemsSchema.items).values(createItemDto).returning();
+  async create(sellerId: string, createItemDto: CreateItemDto) {
+    return this.db
+      .insert(itemsSchema.items)
+      .values({ ...createItemDto, sellerId })
+      .returning();
   }
 
   async update(itemId: string, sellerId: string, updateItemDto: UpdateItemDto) {
