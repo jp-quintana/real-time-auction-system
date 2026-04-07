@@ -96,8 +96,8 @@ export class AuthController {
       this.setCookies(res, payload);
 
       return { message: 'Success!' };
-    } catch (err) {
-      if (err instanceof TokenExpiredError) {
+    } catch (error) {
+      if (error instanceof TokenExpiredError) {
         this.clearCookies(res);
       }
       throw new UnauthorizedException();
