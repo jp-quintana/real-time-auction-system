@@ -1,10 +1,7 @@
 import { IsString, IsEmail, MinLength } from 'class-validator';
 import { Match } from 'src/common/decorators';
-import * as usersSchema from '../schemas';
 
-type User = typeof usersSchema.users.$inferInsert;
-
-export class CreateUserDto implements Partial<User> {
+export class CreateUserDto {
   @IsEmail({}, { message: 'Please provide a valid email address' })
   email: string;
 
