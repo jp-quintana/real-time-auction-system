@@ -144,12 +144,6 @@ export class AuctionsService {
 
     if (auction.item.sellerId !== sellerId) throw new ForbiddenException();
 
-    // if (auction.status !== AUCTION_STATUS_ACTIVE)
-    //   throw new ConflictException('Auction is not active');
-
-    // if (auction.endTime <= new Date())
-    //   throw new ConflictException('Auction has already ended');
-
     if (
       updateAuctionDto.endTime !== undefined &&
       updateAuctionDto.endTime <= auction.endTime
