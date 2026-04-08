@@ -18,6 +18,7 @@ import {
   AUCTION_STATUS_ACTIVE,
   DATABASE_CONNECTION,
   DEFAULT_PAGE_SIZE,
+  ERROR_MESSAGES,
 } from 'src/common/constants';
 import { ItemsService } from '../items/items.service';
 import * as bidsSchema from '../bids/schemas';
@@ -91,7 +92,8 @@ export class AuctionsService {
       },
     });
 
-    if (!auction || auction.deletedAt) throw new NotFoundException();
+    if (!auction || auction.deletedAt)
+      throw new NotFoundException(ERROR_MESSAGES.AUCTION_NOT_FOUND);
 
     return auction;
   }
@@ -104,11 +106,11 @@ export class AuctionsService {
       );
 
       if (!item) {
-        throw new NotFoundException('Item not found');
+        throw new NotFoundException(ERROR_MESSAGES.ITEM_NOT_FOUND);
       }
 
       if (item.sellerId !== sellerId) {
-        throw new ForbiddenException('You do not own this item');
+        throw new ForbiddenException(ERROR_MESSAGES.ITEM_NOT_OWNER);
       }
 
       try {
@@ -124,7 +126,7 @@ export class AuctionsService {
       } catch (error: any) {
         if (error.cause.code === '23505') {
           throw new ConflictException(
-            'An auction for this item is already active',
+            ERROR_MESSAGES.AUCTION_FOR_ITEM_IS_ACTIVE,
           );
         }
         throw error;
@@ -138,19 +140,18 @@ export class AuctionsService {
     updateAuctionDto: UpdateAuctionDto,
   ) {
     if (Object.keys(updateAuctionDto).length === 0)
-      throw new BadRequestException('No properties provided');
+      throw new BadRequestException(ERROR_MESSAGES.MISSING_PROPERTIES);
 
     const auction = await this.findOneById(auctionId, { item: true });
 
-    if (auction.item.sellerId !== sellerId) throw new ForbiddenException();
+    if (auction.item.sellerId !== sellerId)
+      throw new ForbiddenException(ERROR_MESSAGES.ITEM_NOT_OWNER);
 
     if (
       updateAuctionDto.endTime !== undefined &&
       updateAuctionDto.endTime <= auction.endTime
     )
-      throw new ConflictException(
-        'New end time must be after current end time',
-      );
+      throw new ConflictException(ERROR_MESSAGES.AUCTION_NEW_TIME_IS_AFTER);
 
     const conditions = [
       eq(auctionsSchema.auctions.id, auctionId),
@@ -192,9 +193,7 @@ export class AuctionsService {
       .returning();
 
     if (!updated)
-      throw new ConflictException(
-        'Auction cannot be updated in its current state',
-      );
+      throw new ConflictException(ERROR_MESSAGES.AUCTION_UPDATE_FAIL);
 
     return updated;
   }

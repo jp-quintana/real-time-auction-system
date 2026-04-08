@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import { ERROR_MESSAGES } from '../constants';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -20,7 +21,7 @@ export class AuthGuard implements CanActivate {
     const token = this.extractToken(request);
 
     if (!token) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(ERROR_MESSAGES.TOKEN_IS_MISSING);
     }
 
     try {
@@ -30,8 +31,7 @@ export class AuthGuard implements CanActivate {
 
       request['user'] = { ...payload };
     } catch (error) {
-      console.log({ error });
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(ERROR_MESSAGES.TOKEN_IS_INVALID);
     }
     return true;
   }

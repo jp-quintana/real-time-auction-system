@@ -16,7 +16,7 @@ import * as sessionsSchema from './schemas';
 import { LoginUserDto } from './dtos';
 import { eq } from 'drizzle-orm';
 import { parseTimeToMs } from 'src/common/helpers';
-import { DATABASE_CONNECTION } from 'src/common/constants';
+import { DATABASE_CONNECTION, ERROR_MESSAGES } from 'src/common/constants';
 
 @Injectable()
 export class AuthService {
@@ -74,7 +74,7 @@ export class AuthService {
         );
       } catch (error: any) {
         if (error.cause.code === '23505') {
-          throw new ConflictException('Email already in use');
+          throw new ConflictException(ERROR_MESSAGES.EMAIL_IS_IN_USE);
         }
         throw error;
       }
@@ -113,7 +113,8 @@ export class AuthService {
   async login(loginUserDto: LoginUserDto) {
     const user = await this.usersService.findOneByEmail(loginUserDto.email);
 
-    if (!user || user.deletedAt) throw new NotFoundException();
+    if (!user || user.deletedAt)
+      throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
 
     const isPasswordValid = await bcrypt.compare(
       loginUserDto.password,
@@ -121,7 +122,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(ERROR_MESSAGES.INVALID_PASSWORD);
     }
 
     const sessionId = crypto.randomUUID();
@@ -153,24 +154,29 @@ export class AuthService {
   async refresh(authUser: AuthUser) {
     const user = await this.usersService.findOneById(authUser.userId);
 
-    if (!user || user.deletedAt) throw new NotFoundException();
+    if (!user || user.deletedAt)
+      throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
 
     if (!authUser.refreshToken || !authUser.sessionId)
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(ERROR_MESSAGES.TOKEN_IS_MISSING);
 
     const session = await this.db.query.sessions.findFirst({
       where: eq(sessionsSchema.sessions.id, authUser.sessionId),
     });
 
     if (!session || session.deletedAt)
-      throw new TokenExpiredError('Refresh token has expired', new Date());
+      throw new TokenExpiredError(
+        ERROR_MESSAGES.REFRESH_TOKEN_IS_EXPIRED,
+        new Date(),
+      );
 
     const isValidRefreshToken = await bcrypt.compare(
       authUser.refreshToken,
       session.hashedRefreshToken,
     );
 
-    if (!isValidRefreshToken) throw new UnauthorizedException();
+    if (!isValidRefreshToken)
+      throw new UnauthorizedException(ERROR_MESSAGES.REFRESH_TOKEN_IS_INVALID);
 
     if (session.expiresAt < new Date()) {
       const now = new Date();
@@ -180,7 +186,7 @@ export class AuthService {
           deletedAt: now,
         })
         .where(eq(sessionsSchema.sessions.id, authUser.sessionId));
-      throw new TokenExpiredError('Refresh token has expired', now);
+      throw new TokenExpiredError(ERROR_MESSAGES.REFRESH_TOKEN_IS_EXPIRED, now);
     }
 
     const payload = { userId: user.id, email: user.email, role: user.role };

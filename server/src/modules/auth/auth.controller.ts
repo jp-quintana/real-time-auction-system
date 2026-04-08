@@ -15,6 +15,7 @@ import { LoginUserDto } from './dtos';
 import { RefreshGuard } from 'src/common/guards';
 import { CurrentUser } from 'src/common/decorators';
 import { TokenExpiredError } from '@nestjs/jwt';
+import { ERROR_MESSAGES } from 'src/common/constants';
 
 @Controller('auth')
 export class AuthController {
@@ -100,7 +101,7 @@ export class AuthController {
       if (error instanceof TokenExpiredError) {
         this.clearCookies(res);
       }
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(ERROR_MESSAGES.TOKEN_IS_EXPIRED);
     }
   }
 }

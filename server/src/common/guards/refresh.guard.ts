@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import { ERROR_MESSAGES } from '../constants';
 
 @Injectable()
 export class RefreshGuard implements CanActivate {
@@ -19,12 +20,12 @@ export class RefreshGuard implements CanActivate {
     const token = this.extractToken(request);
 
     if (!token) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(ERROR_MESSAGES.TOKEN_IS_MISSING);
     }
 
     try {
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.getOrThrow('REFRESH_TOKEN_SECRET'),
+        secret: this.configService.getOrThrow(ERROR_MESSAGES.TOKEN_IS_INVALID),
         ignoreExpiration: true,
       });
 

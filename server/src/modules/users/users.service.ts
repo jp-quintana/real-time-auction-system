@@ -3,7 +3,7 @@ import * as usersSchema from './schemas';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { CreateUserDto } from './dtos';
 import { eq } from 'drizzle-orm';
-import { DATABASE_CONNECTION } from 'src/common/constants';
+import { DATABASE_CONNECTION, ERROR_MESSAGES } from 'src/common/constants';
 
 @Injectable()
 export class UsersService {
@@ -27,7 +27,8 @@ export class UsersService {
       },
     });
 
-    if (!user || user.deletedAt) throw new NotFoundException();
+    if (!user || user.deletedAt)
+      throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
 
     return user;
   }
@@ -39,7 +40,8 @@ export class UsersService {
       where: eq(usersSchema.users.email, email),
     });
 
-    if (!user || user.deletedAt) throw new NotFoundException();
+    if (!user || user.deletedAt)
+      throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
 
     return user;
   }

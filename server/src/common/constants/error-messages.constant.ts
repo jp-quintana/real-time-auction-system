@@ -1,0 +1,17 @@
+export const ERROR_MESSAGES = {
+  MISSING_PROPERTIES: 'No properties provided',
+  EMAIL_IS_IN_USE: 'Email already in use',
+  INVALID_PASSWORD: 'Invalid password',
+  USER_NOT_FOUND: 'User not found',
+  TOKEN_IS_MISSING: 'Token not provided',
+  TOKEN_IS_INVALID: 'Invalid token',
+  TOKEN_IS_EXPIRED: 'Token has expired',
+  REFRESH_TOKEN_IS_INVALID: 'Invalid refresh token',
+  REFRESH_TOKEN_IS_EXPIRED: 'Refresh token has expired',
+  AUCTION_NOT_FOUND: 'Auction not found',
+  AUCTION_FOR_ITEM_IS_ACTIVE: 'An auction for this item is already active',
+  AUCTION_NEW_TIME_IS_AFTER: 'New end time must be after current end time',
+  AUCTION_UPDATE_FAIL: 'Auction cannot be updated in its current state',
+  ITEM_NOT_FOUND: 'Item not found',
+  ITEM_NOT_OWNER: 'You do not own this item',
+} as const;

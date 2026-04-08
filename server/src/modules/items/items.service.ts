@@ -1,6 +1,10 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { DATABASE_CONNECTION, DEFAULT_PAGE_SIZE } from 'src/common/constants';
+import {
+  DATABASE_CONNECTION,
+  DEFAULT_PAGE_SIZE,
+  ERROR_MESSAGES,
+} from 'src/common/constants';
 import * as itemsSchema from './schemas';
 import { CreateItemDto, ItemsQueryDto, UpdateItemDto } from './dtos';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -57,7 +61,8 @@ export class ItemsService {
       },
     });
 
-    if (!item || item.deletedAt) throw new NotFoundException();
+    if (!item || item.deletedAt)
+      throw new NotFoundException(ERROR_MESSAGES.ITEM_NOT_FOUND);
 
     return item;
   }
@@ -73,7 +78,8 @@ export class ItemsService {
       .where(eq(itemsSchema.items.id, itemId))
       .for('update');
 
-    if (!item || item.deletedAt) throw new NotFoundException();
+    if (!item || item.deletedAt)
+      throw new NotFoundException(ERROR_MESSAGES.ITEM_NOT_FOUND);
 
     return item;
   }
@@ -98,7 +104,7 @@ export class ItemsService {
       )
       .returning();
 
-    if (!updated) throw new NotFoundException();
+    if (!updated) throw new NotFoundException(ERROR_MESSAGES.ITEM_NOT_FOUND);
 
     return updated;
   }
