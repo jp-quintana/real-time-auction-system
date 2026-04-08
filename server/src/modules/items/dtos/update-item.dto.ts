@@ -1,6 +1,6 @@
 import { IsOptional, IsString, MinLength } from 'class-validator';
 import { CreateItemDto } from './create-item.dto';
-import { OmitType, PartialType } from '@nestjs/swagger';
+import { PartialType } from '@nestjs/swagger';
 
 export class UpdateItemDto extends PartialType(CreateItemDto) {
   @IsOptional()

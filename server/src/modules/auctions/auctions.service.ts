@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Inject,
@@ -8,17 +9,19 @@ import {
 import { AuctionsQueryDto, CreateAuctionDto } from './dtos';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as auctionsSchema from './schemas';
-import { and, desc, eq, gte, isNull } from 'drizzle-orm';
+import { and, desc, eq, gt, gte, isNull, notExists, sql } from 'drizzle-orm';
 import { AuctionsQueryRelations } from 'src/common/types';
 import {
   AUCTION_SORT_CREATED_AT_ASC,
   AUCTION_SORT_CREATED_AT_DESC,
   AUCTION_SORT_ENDING_SOONEST,
+  AUCTION_STATUS_ACTIVE,
   DATABASE_CONNECTION,
   DEFAULT_PAGE_SIZE,
 } from 'src/common/constants';
 import { ItemsService } from '../items/items.service';
 import * as bidsSchema from '../bids/schemas';
+import { UpdateAuctionDto } from './dtos/update-auction.dto';
 
 @Injectable()
 export class AuctionsService {
@@ -127,5 +130,78 @@ export class AuctionsService {
         throw error;
       }
     });
+  }
+
+  async update(
+    auctionId: string,
+    sellerId: string,
+    updateAuctionDto: UpdateAuctionDto,
+  ) {
+    if (Object.keys(updateAuctionDto).length === 0)
+      throw new BadRequestException('No properties provided');
+
+    const auction = await this.findOneById(auctionId, { item: true });
+
+    if (auction.item.sellerId !== sellerId) throw new ForbiddenException();
+
+    // if (auction.status !== AUCTION_STATUS_ACTIVE)
+    //   throw new ConflictException('Auction is not active');
+
+    // if (auction.endTime <= new Date())
+    //   throw new ConflictException('Auction has already ended');
+
+    if (
+      updateAuctionDto.endTime !== undefined &&
+      updateAuctionDto.endTime <= auction.endTime
+    )
+      throw new ConflictException(
+        'New end time must be after current end time',
+      );
+
+    const conditions = [
+      eq(auctionsSchema.auctions.id, auctionId),
+      eq(auctionsSchema.auctions.status, AUCTION_STATUS_ACTIVE),
+      sql`${auctionsSchema.auctions.endTime} > now()`,
+    ];
+
+    if (updateAuctionDto.startingPrice !== undefined) {
+      conditions.push(
+        notExists(
+          this.db
+            .select()
+            .from(bidsSchema.bids)
+            .where(eq(bidsSchema.bids.auctionId, auctionId)),
+        ),
+      );
+    }
+
+    if (updateAuctionDto.endTime !== undefined) {
+      conditions.push(
+        gt(
+          sql`${updateAuctionDto.endTime}::timestamptz`,
+          auctionsSchema.auctions.endTime,
+        ),
+      );
+    }
+
+    const [updated] = await this.db
+      .update(auctionsSchema.auctions)
+      .set({
+        ...(updateAuctionDto.endTime !== undefined && {
+          endTime: updateAuctionDto.endTime,
+        }),
+        ...(updateAuctionDto.startingPrice !== undefined && {
+          startingPrice: updateAuctionDto.startingPrice.toString(),
+        }),
+      })
+      .where(and(...conditions))
+      .returning();
+
+    if (!updated)
+      throw new ConflictException(
+        'Auction cannot be updated in its current state',
+      );
+
+    return updated;
   }
 }

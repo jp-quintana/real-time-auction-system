@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -11,6 +12,7 @@ import { AuctionsService } from './auctions.service';
 import { AuctionsQueryDto, CreateAuctionDto } from './dtos';
 import { AuthGuard } from 'src/common/guards';
 import { CurrentUser } from 'src/common/decorators';
+import { UpdateAuctionDto } from './dtos/update-auction.dto';
 
 @Controller('auctions')
 export class AuctionsController {
@@ -35,13 +37,13 @@ export class AuctionsController {
     return this.auctionsService.create(requestUserId, createAuctionDto);
   }
 
-  // @Patch(':id')
-  // @UseGuards(AuthGuard)
-  // update(
-  //   @Param('id') id: string,
-  //   @Body() updateItemDto: UpdateItemDto,
-  //   @CurrentUser('userId') requestUserId: string,
-  // ) {
-  //   return this.itemsService.update(id, requestUserId, updateItemDto);
-  // }
+  @Patch(':id')
+  @UseGuards(AuthGuard)
+  update(
+    @Param('id') id: string,
+    @Body() updateAuctionDto: UpdateAuctionDto,
+    @CurrentUser('userId') requestUserId: string,
+  ) {
+    return this.auctionsService.update(id, requestUserId, updateAuctionDto);
+  }
 }
