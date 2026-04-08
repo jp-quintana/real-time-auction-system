@@ -8,7 +8,7 @@ import {
 import { AuctionsQueryDto, CreateAuctionDto } from './dtos';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as auctionsSchema from './schemas';
-import { and, eq, gte, isNull } from 'drizzle-orm';
+import { and, desc, eq, gte, isNull } from 'drizzle-orm';
 import { AuctionsQueryRelations } from 'src/common/types';
 import {
   AUCTION_SORT_CREATED_AT_ASC,
@@ -18,6 +18,7 @@ import {
   DEFAULT_PAGE_SIZE,
 } from 'src/common/constants';
 import { ItemsService } from '../items/items.service';
+import * as bidsSchema from '../bids/schemas';
 
 @Injectable()
 export class AuctionsService {
@@ -67,6 +68,29 @@ export class AuctionsService {
         }),
       },
     });
+  }
+
+  async findOneById(
+    auctionId: string,
+    relations: AuctionsQueryRelations = { item: true, bids: false },
+  ) {
+    const auction = await this.db.query.auctions.findFirst({
+      where: eq(auctionsSchema.auctions.id, auctionId),
+      with: {
+        ...(relations.item && {
+          item: true,
+        }),
+        ...(relations.bids && {
+          bids: {
+            orderBy: [desc(bidsSchema.bids.amount)],
+          },
+        }),
+      },
+    });
+
+    if (!auction || auction.deletedAt) throw new NotFoundException();
+
+    return auction;
   }
 
   async create(sellerId: string, createAuctionDto: CreateAuctionDto) {

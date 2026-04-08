@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { AuctionsService } from './auctions.service';
 import { AuctionsQueryDto, CreateAuctionDto } from './dtos';
 import { AuthGuard } from 'src/common/guards';
@@ -9,16 +17,14 @@ export class AuctionsController {
   constructor(private readonly auctionsService: AuctionsService) {}
 
   @Get()
-  @UseGuards()
   findAll(@Query() auctionsQueryDto: AuctionsQueryDto) {
     return this.auctionsService.findAll(auctionsQueryDto);
   }
 
-  // @Get(':id')
-  // @UseGuards(AuthGuard)
-  // findOneById(@Param('id') id: string) {
-  //   return this.itemsService.findOneById(id, { seller: true, auctions: true });
-  // }
+  @Get(':id')
+  findOneById(@Param('id') id: string) {
+    return this.auctionsService.findOneById(id, { item: true, bids: true });
+  }
 
   @Post()
   @UseGuards(AuthGuard)
