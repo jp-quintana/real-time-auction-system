@@ -95,7 +95,7 @@ export class AuctionsService {
 
         return auction;
       } catch (error: any) {
-        if (error.code === '23505') {
+        if (error.cause.code === '23505') {
           throw new ConflictException(
             'An auction for this item is already active',
           );

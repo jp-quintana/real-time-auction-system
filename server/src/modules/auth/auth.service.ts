@@ -73,7 +73,7 @@ export class AuthService {
           tx,
         );
       } catch (error: any) {
-        if (error.code === '23505') {
+        if (error.cause.code === '23505') {
           throw new ConflictException('Email already in use');
         }
         throw error;
