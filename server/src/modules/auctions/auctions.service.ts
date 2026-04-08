@@ -29,7 +29,7 @@ export class AuctionsService {
 
   async findAll(
     auctionsQueryDto: AuctionsQueryDto,
-    relations: AuctionsQueryRelations = { item: false, bids: false },
+    relations: AuctionsQueryRelations = { item: true, bids: false },
   ) {
     const page = auctionsQueryDto.page || 1;
     const pageSize = auctionsQueryDto.pageSize || DEFAULT_PAGE_SIZE;
