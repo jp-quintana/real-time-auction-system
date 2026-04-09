@@ -85,6 +85,13 @@
       "when": 1775601777764,
       "tag": "0011_safe_aaron_stack",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1775707984615,
+      "tag": "0012_pretty_princess_powerful",
+      "breakpoints": true
     }
   ]
 }

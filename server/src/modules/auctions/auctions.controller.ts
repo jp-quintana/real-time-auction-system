@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -45,5 +46,14 @@ export class AuctionsController {
     @CurrentUser('userId') requestUserId: string,
   ) {
     return this.auctionsService.update(id, requestUserId, updateAuctionDto);
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard)
+  delete(
+    @Param('id') id: string,
+    @CurrentUser('userId') requestUserId: string,
+  ) {
+    return this.auctionsService.remove(id, requestUserId);
   }
 }

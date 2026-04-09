@@ -197,4 +197,42 @@ export class AuctionsService {
 
     return updated;
   }
+
+  async remove(auctionId: string, sellerId: string) {
+    const auction = await this.findOneById(auctionId, { item: true });
+
+    if (auction.item.sellerId !== sellerId)
+      throw new ForbiddenException(ERROR_MESSAGES.ITEM_NOT_OWNER);
+
+    if (auction.status !== AUCTION_STATUS_ACTIVE) {
+      throw new ConflictException(ERROR_MESSAGES.AUCTION_IS_NOT_ACTIVE);
+    }
+
+    if (auction.endTime <= new Date())
+      throw new ConflictException(ERROR_MESSAGES.AUCTION_IS_COMPLETE);
+
+    const [deleted] = await this.db
+      .update(auctionsSchema.auctions)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          isNull(auctionsSchema.auctions.deletedAt),
+          eq(auctionsSchema.auctions.id, auctionId),
+          eq(auctionsSchema.auctions.status, AUCTION_STATUS_ACTIVE),
+          sql`${auctionsSchema.auctions.endTime} > now()`,
+          notExists(
+            this.db
+              .select()
+              .from(bidsSchema.bids)
+              .where(eq(bidsSchema.bids.auctionId, auctionId)),
+          ),
+        ),
+      )
+      .returning();
+
+    if (!deleted)
+      throw new ConflictException(ERROR_MESSAGES.AUCTION_DELETE_FAIL);
+
+    return deleted;
+  }
 }

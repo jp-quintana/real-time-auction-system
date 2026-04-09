@@ -12,6 +12,10 @@ export const ERROR_MESSAGES = {
   AUCTION_FOR_ITEM_IS_ACTIVE: 'An auction for this item is already active',
   AUCTION_NEW_TIME_IS_AFTER: 'New end time must be after current end time',
   AUCTION_UPDATE_FAIL: 'Auction cannot be updated in its current state',
+  AUCTION_DELETE_FAIL: 'Auction cannot be deleted in its current state',
+  AUCTION_IS_COMPLETE: 'Auction has already ended',
+  AUCTION_IS_CANCELLED: 'Auction has been cancelled',
+  AUCTION_IS_NOT_ACTIVE: 'Auction is not active',
   ITEM_NOT_FOUND: 'Item not found',
   ITEM_NOT_OWNER: 'You do not own this item',
 } as const;

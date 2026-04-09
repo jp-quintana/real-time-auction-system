@@ -31,7 +31,9 @@ export const auctions = pgTable(
   (table) => [
     uniqueIndex('auctions_one_active_per_item')
       .on(table.itemId)
-      .where(sql`${table.status} = ${sql.raw(`'${AUCTION_STATUS_ACTIVE}'`)}`),
+      .where(
+        sql`${table.status} = ${sql.raw(`'${AUCTION_STATUS_ACTIVE}'`)} AND ${table.deletedAt} IS NULL`,
+      ),
   ],
 );
 
