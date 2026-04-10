@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import { ACCESS_TOKEN_COOKIE_NAME, ERROR_MESSAGES } from '../constants';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -20,7 +21,7 @@ export class AuthGuard implements CanActivate {
     const token = this.extractToken(request);
 
     if (!token) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(ERROR_MESSAGES.TOKEN_IS_MISSING);
     }
 
     try {
@@ -30,17 +31,12 @@ export class AuthGuard implements CanActivate {
 
       request['user'] = { ...payload };
     } catch (error) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(ERROR_MESSAGES.TOKEN_IS_INVALID);
     }
     return true;
   }
 
   private extractToken(request: Request) {
-    if (request.cookies?.accessToken) {
-      return request.cookies.accessToken;
-    }
-
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
+    return request.cookies?.[ACCESS_TOKEN_COOKIE_NAME];
   }
 }

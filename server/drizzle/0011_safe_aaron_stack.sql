@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "auctions_one_active_per_item" ON "auctions" USING btree ("item_id") WHERE "auctions"."status" = 'active';

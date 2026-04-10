@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import { ERROR_MESSAGES, REFRESH_TOKEN_COOKIE_NAME } from '../constants';
 
 @Injectable()
 export class RefreshGuard implements CanActivate {
@@ -19,7 +20,7 @@ export class RefreshGuard implements CanActivate {
     const token = this.extractToken(request);
 
     if (!token) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(ERROR_MESSAGES.TOKEN_IS_MISSING);
     }
 
     try {
@@ -27,19 +28,14 @@ export class RefreshGuard implements CanActivate {
         secret: this.configService.getOrThrow('REFRESH_TOKEN_SECRET'),
         ignoreExpiration: true,
       });
-
       request['user'] = { ...payload, refreshToken: token };
     } catch (err) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(ERROR_MESSAGES.REFRESH_TOKEN_IS_INVALID);
     }
     return true;
   }
 
   private extractToken(request: Request) {
-    if (request.cookies.refreshToken)
-      return request.cookies.refreshToken as string;
-    if (request.headers['refresh-token'])
-      return request.headers['refresh-token'] as string;
-    return undefined;
+    return request.cookies?.[REFRESH_TOKEN_COOKIE_NAME];
   }
 }

@@ -14,6 +14,8 @@ export const CurrentUser = createParamDecorator(
       throw new UnauthorizedException();
     }
 
-    return data && request.user[data] ? request.user[data] : request.user;
+    return data && request.user[data] !== undefined
+      ? request.user[data]
+      : request.user;
   },
 );
