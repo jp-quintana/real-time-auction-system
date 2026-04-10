@@ -152,7 +152,7 @@ export class AuthService {
   }
 
   async refresh(authUser: AuthUser) {
-    const user = await this.usersService.findOneById(authUser.userId);
+    const user = await this.usersService.findOneById(authUser.userId, true);
 
     if (!user || user.deletedAt)
       throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);

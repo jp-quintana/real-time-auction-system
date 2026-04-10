@@ -16,7 +16,7 @@ export class UsersService {
     return this.db.query.users.findMany();
   }
 
-  async findOneById(id: string, tx?: any) {
+  async findOneById(id: string, includeRole = false, tx?: any) {
     const db = tx || this.db;
 
     const user = db.query.users.findFirst({
@@ -24,6 +24,7 @@ export class UsersService {
       columns: {
         id: true,
         email: true,
+        role: includeRole,
       },
     });
 
