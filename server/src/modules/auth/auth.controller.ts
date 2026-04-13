@@ -76,7 +76,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
   @ApiResponse({ status: 400, description: 'Validation error' })
-  @ApiResponse({ status: 409, description: ERROR_MESSAGES.EMAIL_IS_IN_USE })
+  @ApiResponse({ status: 409, description: ERROR_MESSAGES.EMAIL_IN_USE })
   async register(
     @Body() createUserDto: CreateUserDto,
     @Res({ passthrough: true }) res: Response,
@@ -110,7 +110,7 @@ export class AuthController {
   @ApiCookieAuth(REFRESH_TOKEN_COOKIE_NAME)
   @ApiOperation({ summary: 'Refresh access token using refresh token cookie' })
   @ApiResponse({ status: 201, description: 'Tokens refreshed successfully' })
-  @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_IS_EXPIRED })
+  @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_EXPIRED })
   async refresh(
     @CurrentUser() authUser: AuthUser,
     @Res({ passthrough: true }) res: Response,
@@ -124,7 +124,7 @@ export class AuthController {
     } catch (error) {
       if (error instanceof TokenExpiredError) {
         this.clearCookies(res);
-        throw new UnauthorizedException(ERROR_MESSAGES.TOKEN_IS_EXPIRED);
+        throw new UnauthorizedException(ERROR_MESSAGES.TOKEN_EXPIRED);
       }
       throw error;
     }

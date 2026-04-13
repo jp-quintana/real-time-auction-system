@@ -113,15 +113,19 @@ export class AuctionsService {
         itemsSchema.items,
         eq(itemsSchema.items.id, auctionsSchema.auctions.itemId),
       )
-      .where(eq(auctionsSchema.auctions.id, auctionId))
+      .where(
+        and(
+          eq(auctionsSchema.auctions.id, auctionId),
+          eq(auctionsSchema.auctions.status, AUCTION_STATUS_ACTIVE),
+          sql`${auctionsSchema.auctions.endTime} > now()`,
+        ),
+      )
       .for('update', { of: auctionsSchema.auctions });
 
     if (!auctionAndItem || auctionAndItem.auction.deletedAt)
       throw new NotFoundException(ERROR_MESSAGES.AUCTION_NOT_FOUND);
 
-    return {
-      auction: { ...auctionAndItem.auction, item: auctionAndItem.item },
-    };
+    return { ...auctionAndItem.auction, item: auctionAndItem.item };
   }
 
   async create(sellerId: string, createAuctionDto: CreateAuctionDto) {
@@ -151,9 +155,7 @@ export class AuctionsService {
         return auction;
       } catch (error: any) {
         if (error.cause.code === '23505') {
-          throw new ConflictException(
-            ERROR_MESSAGES.AUCTION_FOR_ITEM_IS_ACTIVE,
-          );
+          throw new ConflictException(ERROR_MESSAGES.AUCTION_FOR_ITEM_ACTIVE);
         }
         throw error;
       }
@@ -177,7 +179,7 @@ export class AuctionsService {
       updateAuctionDto.endTime !== undefined &&
       updateAuctionDto.endTime <= auction.endTime
     )
-      throw new ConflictException(ERROR_MESSAGES.AUCTION_NEW_TIME_IS_AFTER);
+      throw new ConflictException(ERROR_MESSAGES.AUCTION_NEW_TIME_IN_PAST);
 
     const conditions = [
       eq(auctionsSchema.auctions.id, auctionId),
@@ -231,11 +233,11 @@ export class AuctionsService {
       throw new ForbiddenException(ERROR_MESSAGES.ITEM_NOT_OWNER);
 
     if (auction.status !== AUCTION_STATUS_ACTIVE) {
-      throw new ConflictException(ERROR_MESSAGES.AUCTION_IS_NOT_ACTIVE);
+      throw new ConflictException(ERROR_MESSAGES.AUCTION_NOT_ACTIVE);
     }
 
     if (auction.endTime <= new Date())
-      throw new ConflictException(ERROR_MESSAGES.AUCTION_IS_COMPLETE);
+      throw new ConflictException(ERROR_MESSAGES.AUCTION_COMPLETE);
 
     const [deleted] = await this.db
       .update(auctionsSchema.auctions)

@@ -73,7 +73,7 @@ export class AuthService {
         );
       } catch (error: any) {
         if (error.cause.code === '23505') {
-          throw new ConflictException(ERROR_MESSAGES.EMAIL_IS_IN_USE);
+          throw new ConflictException(ERROR_MESSAGES.EMAIL_IN_USE);
         }
         throw error;
       }
@@ -157,7 +157,7 @@ export class AuthService {
       throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
 
     if (!authUser.refreshToken || !authUser.sessionId)
-      throw new UnauthorizedException(ERROR_MESSAGES.TOKEN_IS_MISSING);
+      throw new UnauthorizedException(ERROR_MESSAGES.TOKEN_MISSING);
 
     const session = await this.db.query.sessions.findFirst({
       where: eq(sessionsSchema.sessions.id, authUser.sessionId),
@@ -165,7 +165,7 @@ export class AuthService {
 
     if (!session || session.deletedAt)
       throw new TokenExpiredError(
-        ERROR_MESSAGES.REFRESH_TOKEN_IS_EXPIRED,
+        ERROR_MESSAGES.REFRESH_TOKEN_EXPIRED,
         new Date(),
       );
 
@@ -175,7 +175,7 @@ export class AuthService {
     );
 
     if (!isValidRefreshToken)
-      throw new UnauthorizedException(ERROR_MESSAGES.REFRESH_TOKEN_IS_INVALID);
+      throw new UnauthorizedException(ERROR_MESSAGES.REFRESH_TOKEN_INVALID);
 
     if (session.expiresAt < new Date()) {
       const now = new Date();
@@ -185,7 +185,7 @@ export class AuthService {
           deletedAt: now,
         })
         .where(eq(sessionsSchema.sessions.id, authUser.sessionId));
-      throw new TokenExpiredError(ERROR_MESSAGES.REFRESH_TOKEN_IS_EXPIRED, now);
+      throw new TokenExpiredError(ERROR_MESSAGES.REFRESH_TOKEN_EXPIRED, now);
     }
 
     const payload = { userId: user.id, email: user.email, role: user.role };

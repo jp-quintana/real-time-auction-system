@@ -52,12 +52,12 @@ export class AuctionsController {
   @ApiOperation({ summary: 'Create a new auction' })
   @ApiResponse({ status: 201, description: 'Auction created successfully' })
   @ApiResponse({ status: 400, description: 'Validation error' })
-  @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_IS_MISSING })
+  @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_MISSING })
   @ApiResponse({ status: 403, description: ERROR_MESSAGES.ITEM_NOT_OWNER })
   @ApiResponse({ status: 404, description: ERROR_MESSAGES.ITEM_NOT_FOUND })
   @ApiResponse({
     status: 409,
-    description: ERROR_MESSAGES.AUCTION_FOR_ITEM_IS_ACTIVE,
+    description: ERROR_MESSAGES.AUCTION_FOR_ITEM_ACTIVE,
   })
   create(
     @Body() createAuctionDto: CreateAuctionDto,
@@ -77,7 +77,7 @@ export class AuctionsController {
   })
   @ApiResponse({ status: 200, description: 'Auction updated successfully' })
   @ApiResponse({ status: 400, description: ERROR_MESSAGES.MISSING_PROPERTIES })
-  @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_IS_MISSING })
+  @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_MISSING })
   @ApiResponse({ status: 403, description: ERROR_MESSAGES.ITEM_NOT_OWNER })
   @ApiResponse({ status: 404, description: ERROR_MESSAGES.AUCTION_NOT_FOUND })
   @ApiResponse({ status: 409, description: ERROR_MESSAGES.AUCTION_UPDATE_FAIL })
@@ -94,7 +94,7 @@ export class AuctionsController {
   @ApiCookieAuth(ACCESS_TOKEN_COOKIE_NAME)
   @ApiOperation({ summary: 'Delete an auction' })
   @ApiResponse({ status: 200, description: 'Auction deleted successfully' })
-  @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_IS_MISSING })
+  @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_MISSING })
   @ApiResponse({ status: 403, description: ERROR_MESSAGES.ITEM_NOT_OWNER })
   @ApiResponse({ status: 404, description: ERROR_MESSAGES.AUCTION_NOT_FOUND })
   @ApiResponse({ status: 409, description: ERROR_MESSAGES.AUCTION_DELETE_FAIL })

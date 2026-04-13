@@ -3,7 +3,12 @@ import { UsersService } from './users.service';
 import { AdminGuard, AuthGuard } from 'src/common/guards';
 import { CurrentUser } from 'src/common/decorators';
 import { ItemsService } from '../items/items.service';
-import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiCookieAuth,
+} from '@nestjs/swagger';
 import { ACCESS_TOKEN_COOKIE_NAME, ERROR_MESSAGES } from 'src/common/constants';
 
 @ApiTags('users')
@@ -18,8 +23,11 @@ export class UsersController {
   @Get()
   @UseGuards(AuthGuard, AdminGuard)
   @ApiOperation({ summary: 'Get all users (admin only)' })
-  @ApiResponse({ status: 200, description: 'List of all users returned successfully' })
-  @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_IS_MISSING })
+  @ApiResponse({
+    status: 200,
+    description: 'List of all users returned successfully',
+  })
+  @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_MISSING })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   findAll() {
     return this.usersService.findAll();
@@ -28,8 +36,11 @@ export class UsersController {
   @Get('me')
   @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, description: 'User profile returned successfully' })
-  @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_IS_MISSING })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile returned successfully',
+  })
+  @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_MISSING })
   @ApiResponse({ status: 404, description: ERROR_MESSAGES.USER_NOT_FOUND })
   getProfile(@CurrentUser('userId') requestUserId: string) {
     return this.usersService.findOneById(requestUserId);
@@ -39,7 +50,7 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Get items belonging to the current user' })
   @ApiResponse({ status: 200, description: 'User items returned successfully' })
-  @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_IS_MISSING })
+  @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_MISSING })
   getUserItems(@CurrentUser('userId') requestUserId: string) {
     return this.itemsService.findAll(
       { sellerId: requestUserId },
