@@ -7,10 +7,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AuctionsQueryDto, CreateAuctionDto } from './dtos';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as auctionsSchema from './schemas';
 import { and, desc, eq, gt, gte, isNull, notExists, sql } from 'drizzle-orm';
-import { AuctionsQueryRelations } from 'src/common/types';
+import {
+  AuctionsQueryRelations,
+  type Database,
+  Transaction,
+} from 'src/common/types';
 import {
   AUCTION_SORT_CREATED_AT_ASC,
   AUCTION_SORT_CREATED_AT_DESC,
@@ -21,14 +24,15 @@ import {
   ERROR_MESSAGES,
 } from 'src/common/constants';
 import { ItemsService } from '../items/items.service';
-import * as bidsSchema from '../bids/schemas';
 import { UpdateAuctionDto } from './dtos/update-auction.dto';
+import * as bidsSchema from '../bids/schemas';
+import * as itemsSchema from '../items/schemas';
 
 @Injectable()
 export class AuctionsService {
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: NodePgDatabase<typeof auctionsSchema>,
+    private readonly db: Database,
     private readonly itemsService: ItemsService,
   ) {}
 
@@ -96,6 +100,28 @@ export class AuctionsService {
       throw new NotFoundException(ERROR_MESSAGES.AUCTION_NOT_FOUND);
 
     return auction;
+  }
+
+  async lockByIdForUpdate(auctionId: string, tx: Transaction) {
+    const [auctionAndItem] = await tx
+      .select({
+        auction: auctionsSchema.auctions,
+        item: itemsSchema.items,
+      })
+      .from(auctionsSchema.auctions)
+      .innerJoin(
+        itemsSchema.items,
+        eq(itemsSchema.items.id, auctionsSchema.auctions.itemId),
+      )
+      .where(eq(auctionsSchema.auctions.id, auctionId))
+      .for('update', { of: auctionsSchema.auctions });
+
+    if (!auctionAndItem || auctionAndItem.auction.deletedAt)
+      throw new NotFoundException(ERROR_MESSAGES.AUCTION_NOT_FOUND);
+
+    return {
+      auction: { ...auctionAndItem.auction, item: auctionAndItem.item },
+    };
   }
 
   async create(sellerId: string, createAuctionDto: CreateAuctionDto) {

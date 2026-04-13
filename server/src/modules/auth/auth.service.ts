@@ -6,12 +6,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from '../users/dtos';
-import { AuthUser, JwtPayload } from 'src/common/types';
+import { AuthUser, type Database, JwtPayload } from 'src/common/types';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as sessionsSchema from './schemas';
 import { LoginUserDto } from './dtos';
 import { eq } from 'drizzle-orm';
@@ -22,7 +21,7 @@ import { DATABASE_CONNECTION, ERROR_MESSAGES } from 'src/common/constants';
 export class AuthService {
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: NodePgDatabase<typeof sessionsSchema>,
+    private readonly db: Database,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -152,7 +151,7 @@ export class AuthService {
   }
 
   async refresh(authUser: AuthUser) {
-    const user = await this.usersService.findOneById(authUser.userId, true);
+    const user = await this.usersService.findOneWithRoleById(authUser.userId);
 
     if (!user || user.deletedAt)
       throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);

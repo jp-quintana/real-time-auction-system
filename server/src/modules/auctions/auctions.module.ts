@@ -9,5 +9,6 @@ import { ItemsModule } from '../items/items.module';
   imports: [DatabaseModule, JwtModule, ItemsModule],
   providers: [AuctionsService],
   controllers: [AuctionsController],
+  exports: [AuctionsService],
 })
 export class AuctionsModule {}
