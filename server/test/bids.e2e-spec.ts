@@ -4,10 +4,12 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import cookieParser from 'cookie-parser';
-import { PREFIX } from 'src/common/constants';
+import { DATABASE_CONNECTION, PREFIX } from 'src/common/constants';
+import { setupTestDb, teardownTestDb, type TestDb } from './setup-test-db';
 
 describe('POST /auctions/:auctionId/bids (e2e)', () => {
   let app: INestApplication<App>;
+  let testDb: TestDb;
 
   let sellerCookies: string[];
   let bidderCookies: string[];
@@ -19,9 +21,14 @@ describe('POST /auctions/:auctionId/bids (e2e)', () => {
   const password = 'password123';
 
   beforeAll(async () => {
+    testDb = await setupTestDb();
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(DATABASE_CONNECTION)
+      .useValue(testDb.db)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix(PREFIX);
@@ -80,6 +87,7 @@ describe('POST /auctions/:auctionId/bids (e2e)', () => {
 
   afterAll(async () => {
     await app.close();
+    await teardownTestDb(testDb);
   });
 
   it('should return 401 when no auth token is provided', async () => {
