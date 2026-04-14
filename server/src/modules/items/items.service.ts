@@ -1,5 +1,4 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   DATABASE_CONNECTION,
   DEFAULT_PAGE_SIZE,
@@ -8,13 +7,17 @@ import {
 import * as itemsSchema from './schemas';
 import { CreateItemDto, ItemsQueryDto, UpdateItemDto } from './dtos';
 import { and, eq, isNull } from 'drizzle-orm';
-import { ItemsQueryRelations } from 'src/common/types';
+import {
+  type Database,
+  ItemsQueryRelations,
+  type Transaction,
+} from 'src/common/types';
 
 @Injectable()
 export class ItemsService {
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: NodePgDatabase<typeof itemsSchema>,
+    private readonly db: Database,
   ) {}
 
   async findAll(
@@ -67,7 +70,7 @@ export class ItemsService {
     return item;
   }
 
-  async lockByIdForUpdate(itemId: string, tx: any) {
+  async lockByIdForUpdate(itemId: string, tx: Transaction) {
     const [item] = await tx
       .select({
         id: itemsSchema.items.id,

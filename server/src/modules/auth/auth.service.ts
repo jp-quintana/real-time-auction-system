@@ -6,12 +6,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from '../users/dtos';
-import { AuthUser, JwtPayload } from 'src/common/types';
+import { AuthUser, type Database, JwtPayload } from 'src/common/types';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as sessionsSchema from './schemas';
 import { LoginUserDto } from './dtos';
 import { eq } from 'drizzle-orm';
@@ -22,7 +21,7 @@ import { DATABASE_CONNECTION, ERROR_MESSAGES } from 'src/common/constants';
 export class AuthService {
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: NodePgDatabase<typeof sessionsSchema>,
+    private readonly db: Database,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -74,7 +73,7 @@ export class AuthService {
         );
       } catch (error: any) {
         if (error.cause.code === '23505') {
-          throw new ConflictException(ERROR_MESSAGES.EMAIL_IS_IN_USE);
+          throw new ConflictException(ERROR_MESSAGES.EMAIL_IN_USE);
         }
         throw error;
       }
@@ -152,13 +151,13 @@ export class AuthService {
   }
 
   async refresh(authUser: AuthUser) {
-    const user = await this.usersService.findOneById(authUser.userId, true);
+    const user = await this.usersService.findOneWithRoleById(authUser.userId);
 
     if (!user || user.deletedAt)
       throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
 
     if (!authUser.refreshToken || !authUser.sessionId)
-      throw new UnauthorizedException(ERROR_MESSAGES.TOKEN_IS_MISSING);
+      throw new UnauthorizedException(ERROR_MESSAGES.TOKEN_MISSING);
 
     const session = await this.db.query.sessions.findFirst({
       where: eq(sessionsSchema.sessions.id, authUser.sessionId),
@@ -166,7 +165,7 @@ export class AuthService {
 
     if (!session || session.deletedAt)
       throw new TokenExpiredError(
-        ERROR_MESSAGES.REFRESH_TOKEN_IS_EXPIRED,
+        ERROR_MESSAGES.REFRESH_TOKEN_EXPIRED,
         new Date(),
       );
 
@@ -176,7 +175,7 @@ export class AuthService {
     );
 
     if (!isValidRefreshToken)
-      throw new UnauthorizedException(ERROR_MESSAGES.REFRESH_TOKEN_IS_INVALID);
+      throw new UnauthorizedException(ERROR_MESSAGES.REFRESH_TOKEN_INVALID);
 
     if (session.expiresAt < new Date()) {
       const now = new Date();
@@ -186,7 +185,7 @@ export class AuthService {
           deletedAt: now,
         })
         .where(eq(sessionsSchema.sessions.id, authUser.sessionId));
-      throw new TokenExpiredError(ERROR_MESSAGES.REFRESH_TOKEN_IS_EXPIRED, now);
+      throw new TokenExpiredError(ERROR_MESSAGES.REFRESH_TOKEN_EXPIRED, now);
     }
 
     const payload = { userId: user.id, email: user.email, role: user.role };

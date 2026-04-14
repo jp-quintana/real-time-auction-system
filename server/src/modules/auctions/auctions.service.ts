@@ -7,10 +7,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AuctionsQueryDto, CreateAuctionDto } from './dtos';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as auctionsSchema from './schemas';
 import { and, desc, eq, gt, gte, isNull, notExists, sql } from 'drizzle-orm';
-import { AuctionsQueryRelations } from 'src/common/types';
+import {
+  AuctionsQueryRelations,
+  type Database,
+  Transaction,
+} from 'src/common/types';
 import {
   AUCTION_SORT_CREATED_AT_ASC,
   AUCTION_SORT_CREATED_AT_DESC,
@@ -21,14 +24,15 @@ import {
   ERROR_MESSAGES,
 } from 'src/common/constants';
 import { ItemsService } from '../items/items.service';
-import * as bidsSchema from '../bids/schemas';
 import { UpdateAuctionDto } from './dtos/update-auction.dto';
+import * as bidsSchema from '../bids/schemas';
+import * as itemsSchema from '../items/schemas';
 
 @Injectable()
 export class AuctionsService {
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: NodePgDatabase<typeof auctionsSchema>,
+    private readonly db: Database,
     private readonly itemsService: ItemsService,
   ) {}
 
@@ -98,6 +102,32 @@ export class AuctionsService {
     return auction;
   }
 
+  async lockByIdForUpdate(auctionId: string, tx: Transaction) {
+    const [auctionAndItem] = await tx
+      .select({
+        auction: auctionsSchema.auctions,
+        item: itemsSchema.items,
+      })
+      .from(auctionsSchema.auctions)
+      .innerJoin(
+        itemsSchema.items,
+        eq(itemsSchema.items.id, auctionsSchema.auctions.itemId),
+      )
+      .where(
+        and(
+          eq(auctionsSchema.auctions.id, auctionId),
+          eq(auctionsSchema.auctions.status, AUCTION_STATUS_ACTIVE),
+          sql`${auctionsSchema.auctions.endTime} > now()`,
+        ),
+      )
+      .for('update', { of: auctionsSchema.auctions });
+
+    if (!auctionAndItem || auctionAndItem.auction.deletedAt)
+      throw new NotFoundException(ERROR_MESSAGES.AUCTION_NOT_FOUND);
+
+    return { ...auctionAndItem.auction, item: auctionAndItem.item };
+  }
+
   async create(sellerId: string, createAuctionDto: CreateAuctionDto) {
     return this.db.transaction(async (tx) => {
       const item = await this.itemsService.lockByIdForUpdate(
@@ -125,9 +155,7 @@ export class AuctionsService {
         return auction;
       } catch (error: any) {
         if (error.cause.code === '23505') {
-          throw new ConflictException(
-            ERROR_MESSAGES.AUCTION_FOR_ITEM_IS_ACTIVE,
-          );
+          throw new ConflictException(ERROR_MESSAGES.AUCTION_FOR_ITEM_ACTIVE);
         }
         throw error;
       }
@@ -151,7 +179,7 @@ export class AuctionsService {
       updateAuctionDto.endTime !== undefined &&
       updateAuctionDto.endTime <= auction.endTime
     )
-      throw new ConflictException(ERROR_MESSAGES.AUCTION_NEW_TIME_IS_AFTER);
+      throw new ConflictException(ERROR_MESSAGES.AUCTION_NEW_TIME_IN_PAST);
 
     const conditions = [
       eq(auctionsSchema.auctions.id, auctionId),
@@ -205,11 +233,11 @@ export class AuctionsService {
       throw new ForbiddenException(ERROR_MESSAGES.ITEM_NOT_OWNER);
 
     if (auction.status !== AUCTION_STATUS_ACTIVE) {
-      throw new ConflictException(ERROR_MESSAGES.AUCTION_IS_NOT_ACTIVE);
+      throw new ConflictException(ERROR_MESSAGES.AUCTION_NOT_ACTIVE);
     }
 
     if (auction.endTime <= new Date())
-      throw new ConflictException(ERROR_MESSAGES.AUCTION_IS_COMPLETE);
+      throw new ConflictException(ERROR_MESSAGES.AUCTION_COMPLETE);
 
     const [deleted] = await this.db
       .update(auctionsSchema.auctions)
