@@ -10,12 +10,14 @@ import { AuctionsService } from '../auctions/auctions.service';
 import { type Database } from 'src/common/types';
 import * as bidsSchema from './schemas';
 import { desc, eq } from 'drizzle-orm';
+import { BidsCacheService } from './bids-cache.service';
 
 @Injectable()
 export class BidsService {
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: Database,
+    private readonly bidsCacheService: BidsCacheService,
     private readonly auctionsService: AuctionsService,
   ) {}
 
@@ -24,7 +26,14 @@ export class BidsService {
     bidderId: string,
     createBidDto: CreateBidDto,
   ) {
-    return await this.db.transaction(async (tx) => {
+    const cachedHighestBid =
+      await this.bidsCacheService.getCachedHighestBid(auctionId);
+
+    if (cachedHighestBid !== null && cachedHighestBid >= createBidDto.amount) {
+      throw new BadRequestException(ERROR_MESSAGES.BID_TOO_LOW);
+    }
+
+    const { bid, auctionEndTime } = await this.db.transaction(async (tx) => {
       const auction = await this.auctionsService.lockByIdForUpdate(
         auctionId,
         tx,
@@ -58,7 +67,19 @@ export class BidsService {
         })
         .returning();
 
-      return bid;
+      return { bid, auctionEndTime: auction.endTime };
     });
+
+    try {
+      await this.bidsCacheService.setHighestBidIfHigher(
+        auctionId,
+        createBidDto.amount,
+        auctionEndTime,
+      );
+    } catch (err) {
+      console.error('Failed to update bid cache after commit', err);
+    }
+
+    return bid;
   }
 }
