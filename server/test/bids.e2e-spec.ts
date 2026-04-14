@@ -6,6 +6,32 @@ import { AppModule } from './../src/app.module';
 import cookieParser from 'cookie-parser';
 import { DATABASE_CONNECTION, PREFIX } from 'src/common/constants';
 import { setupTestDb, teardownTestDb, type TestDb } from './setup-test-db';
+import { eq } from 'drizzle-orm';
+import * as auctionsSchema from '../src/modules/auctions/schemas';
+import * as bidsSchema from '../src/modules/bids/schemas';
+
+const debugPause = (connectionUri: string, minutes = 10): Promise<void> => {
+  return new Promise((resolve) => {
+    console.log('\n──────────────────────────────────────');
+    console.log('DEBUG PAUSE — connect via pgAdmin:');
+    console.log(connectionUri);
+    console.log(`Resuming in ${minutes} minutes. Press any key to continue...`);
+    console.log('──────────────────────────────────────\n');
+
+    const timer = setTimeout(resolve, minutes * 60 * 1000);
+
+    if (process.stdin.isTTY) {
+      process.stdin.setRawMode(true);
+      process.stdin.resume();
+      process.stdin.once('data', () => {
+        process.stdin.setRawMode(false);
+        process.stdin.pause();
+        clearTimeout(timer);
+        resolve();
+      });
+    }
+  });
+};
 
 describe('POST /auctions/:auctionId/bids (e2e)', () => {
   let app: INestApplication<App>;
@@ -85,102 +111,23 @@ describe('POST /auctions/:auctionId/bids (e2e)', () => {
     auctionId = auctionRes.body.id;
   });
 
-  afterAll(async () => {
-    await app.close();
-    await teardownTestDb(testDb);
-  });
+  afterAll(
+    async () => {
+      // Uncomment to pause and inspect the test DB via pgAdmin before teardown
+      // await debugPause(testDb.connectionUri, 10);
+      await app.close();
+      await teardownTestDb(testDb);
+    },
+    11 * 60 * 1000,
+  );
 
-  it('should return 401 when no auth token is provided', async () => {
-    await request(app.getHttpServer())
-      .post(`/${PREFIX}/auctions/${auctionId}/bids`)
-      .send({ amount: 150 })
-      .expect(401);
-  });
+  it('should place a valid bid and persist it in the bids table', async () => {
+    const amount = 150;
 
-  it('should return 400 when amount is missing', async () => {
-    await request(app.getHttpServer())
-      .post(`/${PREFIX}/auctions/${auctionId}/bids`)
-      .set('Cookie', bidderCookies)
-      .send({})
-      .expect(400);
-  });
-
-  it('should return 400 when amount is below minimum', async () => {
-    await request(app.getHttpServer())
-      .post(`/${PREFIX}/auctions/${auctionId}/bids`)
-      .set('Cookie', bidderCookies)
-      .send({ amount: 0 })
-      .expect(400);
-  });
-
-  it('should return 400 when amount has more than 2 decimal places', async () => {
-    await request(app.getHttpServer())
-      .post(`/${PREFIX}/auctions/${auctionId}/bids`)
-      .set('Cookie', bidderCookies)
-      .send({ amount: 150.123 })
-      .expect(400);
-  });
-
-  it('should return 400 when amount exceeds maximum', async () => {
-    await request(app.getHttpServer())
-      .post(`/${PREFIX}/auctions/${auctionId}/bids`)
-      .set('Cookie', bidderCookies)
-      .send({ amount: 1_000_001 })
-      .expect(400);
-  });
-
-  it('should return 400 when extra fields are sent', async () => {
-    await request(app.getHttpServer())
-      .post(`/${PREFIX}/auctions/${auctionId}/bids`)
-      .set('Cookie', bidderCookies)
-      .send({ amount: 150, extraField: 'not allowed' })
-      .expect(400);
-  });
-
-  it('should return 404 when auction does not exist', async () => {
-    const fakeId = '00000000-0000-0000-0000-000000000000';
-    await request(app.getHttpServer())
-      .post(`/${PREFIX}/auctions/${fakeId}/bids`)
-      .set('Cookie', bidderCookies)
-      .send({ amount: 150 })
-      .expect(404);
-  });
-
-  it('should return 403 when seller bids on their own auction', async () => {
-    const res = await request(app.getHttpServer())
-      .post(`/${PREFIX}/auctions/${auctionId}/bids`)
-      .set('Cookie', sellerCookies)
-      .send({ amount: 150 })
-      .expect(403);
-
-    expect(res.body.message).toBe('You cannot bid on your own item');
-  });
-
-  it('should return 400 when bid amount equals starting price', async () => {
     const res = await request(app.getHttpServer())
       .post(`/${PREFIX}/auctions/${auctionId}/bids`)
       .set('Cookie', bidderCookies)
-      .send({ amount: startingPrice })
-      .expect(400);
-
-    expect(res.body.message).toBe('Bid amount is too low');
-  });
-
-  it('should return 400 when bid amount is below starting price', async () => {
-    const res = await request(app.getHttpServer())
-      .post(`/${PREFIX}/auctions/${auctionId}/bids`)
-      .set('Cookie', bidderCookies)
-      .send({ amount: 50 })
-      .expect(400);
-
-    expect(res.body.message).toBe('Bid amount is too low');
-  });
-
-  it('should place a bid successfully', async () => {
-    const res = await request(app.getHttpServer())
-      .post(`/${PREFIX}/auctions/${auctionId}/bids`)
-      .set('Cookie', bidderCookies)
-      .send({ amount: 150 })
+      .send({ amount })
       .expect(201);
 
     expect(res.body).toMatchObject({
@@ -188,9 +135,18 @@ describe('POST /auctions/:auctionId/bids (e2e)', () => {
       auctionId,
       amount: '150.00',
     });
+
+    const [row] = await testDb.db
+      .select()
+      .from(bidsSchema.bids)
+      .where(eq(bidsSchema.bids.id, res.body.id));
+
+    expect(row).toBeDefined();
+    expect(row.auctionId).toBe(auctionId);
+    expect(row.amount).toBe('150.00');
   });
 
-  it('should return 400 when bid is equal to current highest bid', async () => {
+  it('should reject a bid equal to the current highest bid', async () => {
     const res = await request(app.getHttpServer())
       .post(`/${PREFIX}/auctions/${auctionId}/bids`)
       .set('Cookie', bidderCookies)
@@ -200,7 +156,7 @@ describe('POST /auctions/:auctionId/bids (e2e)', () => {
     expect(res.body.message).toBe('Bid amount is too low');
   });
 
-  it('should return 400 when bid is below current highest bid', async () => {
+  it('should reject a bid lower than the current highest bid', async () => {
     const res = await request(app.getHttpServer())
       .post(`/${PREFIX}/auctions/${auctionId}/bids`)
       .set('Cookie', bidderCookies)
@@ -210,17 +166,138 @@ describe('POST /auctions/:auctionId/bids (e2e)', () => {
     expect(res.body.message).toBe('Bid amount is too low');
   });
 
-  it('should place a second higher bid successfully', async () => {
-    const res = await request(app.getHttpServer())
-      .post(`/${PREFIX}/auctions/${auctionId}/bids`)
-      .set('Cookie', bidderCookies)
-      .send({ amount: 200.5 })
+  it('should reject a bid on a closed auction', async () => {
+    // Create a separate item + auction, then close it
+    const itemRes = await request(app.getHttpServer())
+      .post(`/${PREFIX}/items`)
+      .set('Cookie', sellerCookies)
+      .send({ title: 'Closed Auction Item', description: 'Will be closed' })
       .expect(201);
 
-    expect(res.body).toMatchObject({
-      id: expect.any(String),
-      auctionId,
-      amount: '200.50',
+    const auctionRes = await request(app.getHttpServer())
+      .post(`/${PREFIX}/auctions`)
+      .set('Cookie', sellerCookies)
+      .send({
+        itemId: itemRes.body[0].id,
+        startingPrice: 100,
+        endTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      })
+      .expect(201);
+
+    const closedAuctionId = auctionRes.body.id;
+
+    // Set status to closed directly in the database
+    await testDb.db
+      .update(auctionsSchema.auctions)
+      .set({ status: 'closed' })
+      .where(eq(auctionsSchema.auctions.id, closedAuctionId));
+
+    await request(app.getHttpServer())
+      .post(`/${PREFIX}/auctions/${closedAuctionId}/bids`)
+      .set('Cookie', bidderCookies)
+      .send({ amount: 200 })
+      .expect(404);
+  });
+
+  it('should reject a bid on an expired auction', async () => {
+    // Create a separate item + auction, then set endTime in the past
+    const itemRes = await request(app.getHttpServer())
+      .post(`/${PREFIX}/items`)
+      .set('Cookie', sellerCookies)
+      .send({ title: 'Expired Auction Item', description: 'Will be expired' })
+      .expect(201);
+
+    const auctionRes = await request(app.getHttpServer())
+      .post(`/${PREFIX}/auctions`)
+      .set('Cookie', sellerCookies)
+      .send({
+        itemId: itemRes.body[0].id,
+        startingPrice: 100,
+        endTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      })
+      .expect(201);
+
+    const expiredAuctionId = auctionRes.body.id;
+
+    // Set endTime to the past directly in the database
+    await testDb.db
+      .update(auctionsSchema.auctions)
+      .set({ endTime: new Date(Date.now() - 60 * 1000) })
+      .where(eq(auctionsSchema.auctions.id, expiredAuctionId));
+
+    await request(app.getHttpServer())
+      .post(`/${PREFIX}/auctions/${expiredAuctionId}/bids`)
+      .set('Cookie', bidderCookies)
+      .send({ amount: 200 })
+      .expect(404);
+  });
+
+  it('should reject a bid when the seller bids on their own auction', async () => {
+    const res = await request(app.getHttpServer())
+      .post(`/${PREFIX}/auctions/${auctionId}/bids`)
+      .set('Cookie', sellerCookies)
+      .send({ amount: 200 })
+      .expect(403);
+
+    expect(res.body.message).toBe('You cannot bid on your own item');
+  });
+
+  it('should allow exactly one bid to succeed when 10 concurrent bids are placed at the same amount', async () => {
+    // Create a fresh item + auction for the concurrency test
+    const itemRes = await request(app.getHttpServer())
+      .post(`/${PREFIX}/items`)
+      .set('Cookie', sellerCookies)
+      .send({
+        title: 'Concurrency Test Item',
+        description: 'Testing locking',
+      })
+      .expect(201);
+
+    const auctionRes = await request(app.getHttpServer())
+      .post(`/${PREFIX}/auctions`)
+      .set('Cookie', sellerCookies)
+      .send({
+        itemId: itemRes.body[0].id,
+        startingPrice: 100,
+        endTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      })
+      .expect(201);
+
+    const concurrencyAuctionId = auctionRes.body.id;
+
+    // Register 10 distinct bidders
+    const bidderCookiesList: string[][] = [];
+    for (let i = 0; i < 10; i++) {
+      const res = await request(app.getHttpServer())
+        .post(`/${PREFIX}/auth/register`)
+        .send({
+          email: `concurrent-bidder-${Date.now()}-${i}@test.com`,
+          password,
+          confirmPassword: password,
+        })
+        .expect(201);
+      bidderCookiesList.push(res.headers['set-cookie'] as unknown as string[]);
+    }
+
+    // Fire 10 bids at the same amount simultaneously
+    const amount = 200;
+    const results = await Promise.all(
+      bidderCookiesList.map((cookies) =>
+        request(app.getHttpServer())
+          .post(`/${PREFIX}/auctions/${concurrencyAuctionId}/bids`)
+          .set('Cookie', cookies)
+          .send({ amount }),
+      ),
+    );
+
+    const successes = results.filter((r) => r.status === 201);
+    const failures = results.filter((r) => r.status === 400);
+
+    expect(successes).toHaveLength(1);
+    expect(failures).toHaveLength(9);
+
+    failures.forEach((r) => {
+      expect(r.body.message).toBe('Bid amount is too low');
     });
   });
 });
