@@ -35,7 +35,7 @@ export class BidsCacheService implements OnModuleInit {
   }
 
   private key(auctionId: string) {
-    return `${AUCTION_KEY_PREFIX}:${auctionId}:${AUCTION_HIGHEST_BID_KEY_SUFFIX}}`;
+    return `${AUCTION_KEY_PREFIX}:${auctionId}:${AUCTION_HIGHEST_BID_KEY_SUFFIX}`;
   }
 
   async getCachedHighestBid(auctionId: string): Promise<number | null> {
