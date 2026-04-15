@@ -6,7 +6,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from '../users/dtos';
-import { AuthUser, type Database, JwtPayload } from 'src/common/types';
+import {
+  AccessTokenPayload,
+  AuthSession,
+  type Database,
+  JwtPayload,
+  RefreshTokenPayload,
+} from 'src/common/types';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
@@ -14,7 +20,7 @@ import * as bcrypt from 'bcrypt';
 import * as sessionsSchema from './schemas';
 import { LoginUserDto } from './dtos';
 import { eq } from 'drizzle-orm';
-import { parseTimeToMs } from 'src/common/helpers';
+import { parseTimeToMs } from 'src/common/utils';
 import { DATABASE_CONNECTION, ERROR_MESSAGES } from 'src/common/constants';
 
 @Injectable()
@@ -58,7 +64,7 @@ export class AuthService {
     };
   }
 
-  async register(createUserDto: CreateUserDto) {
+  async register(createUserDto: CreateUserDto): Promise<AuthSession> {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
     return await this.db.transaction(async (tx) => {
@@ -89,27 +95,21 @@ export class AuthService {
         refreshTokenExpiresAt,
       } = await this.generateTokens(payload, sessionId);
 
-      const [session] = await tx
-        .insert(sessionsSchema.sessions)
-        .values({
-          id: sessionId,
-          hashedRefreshToken,
-          expiresAt: refreshTokenExpiresAt,
-          userId: user.id,
-        })
-        .returning();
+      await tx.insert(sessionsSchema.sessions).values({
+        id: sessionId,
+        hashedRefreshToken,
+        expiresAt: refreshTokenExpiresAt,
+        userId: user.id,
+      });
 
       return {
-        accessToken,
-        refreshToken,
-        accessTokenExpiresAt,
-        refreshTokenExpiresAt,
-        session,
+        access: { token: accessToken, expiresAt: accessTokenExpiresAt },
+        refresh: { token: refreshToken, expiresAt: refreshTokenExpiresAt },
       };
     });
   }
 
-  async login(loginUserDto: LoginUserDto) {
+  async login(loginUserDto: LoginUserDto): Promise<AuthSession> {
     const user = await this.usersService.findOneByEmail(loginUserDto.email);
 
     if (!user || user.deletedAt)
@@ -143,24 +143,24 @@ export class AuthService {
     });
 
     return {
-      accessToken,
-      refreshToken,
-      accessTokenExpiresAt,
-      refreshTokenExpiresAt,
+      access: { token: accessToken, expiresAt: accessTokenExpiresAt },
+      refresh: { token: refreshToken, expiresAt: refreshTokenExpiresAt },
     };
   }
 
-  async refresh(authUser: AuthUser) {
-    const user = await this.usersService.findOneWithRoleById(authUser.userId);
+  async refresh(sessionUser: RefreshTokenPayload): Promise<AuthSession> {
+    const user = await this.usersService.findOneWithRoleById(
+      sessionUser.userId,
+    );
 
     if (!user || user.deletedAt)
       throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
 
-    if (!authUser.refreshToken || !authUser.sessionId)
+    if (!sessionUser.refreshToken || !sessionUser.sessionId)
       throw new UnauthorizedException(ERROR_MESSAGES.TOKEN_MISSING);
 
     const session = await this.db.query.sessions.findFirst({
-      where: eq(sessionsSchema.sessions.id, authUser.sessionId),
+      where: eq(sessionsSchema.sessions.id, sessionUser.sessionId),
     });
 
     if (!session || session.deletedAt)
@@ -170,7 +170,7 @@ export class AuthService {
       );
 
     const isValidRefreshToken = await bcrypt.compare(
-      authUser.refreshToken,
+      sessionUser.refreshToken,
       session.hashedRefreshToken,
     );
 
@@ -184,7 +184,7 @@ export class AuthService {
         .set({
           deletedAt: now,
         })
-        .where(eq(sessionsSchema.sessions.id, authUser.sessionId));
+        .where(eq(sessionsSchema.sessions.id, sessionUser.sessionId));
       throw new TokenExpiredError(ERROR_MESSAGES.REFRESH_TOKEN_EXPIRED, now);
     }
 
@@ -196,7 +196,7 @@ export class AuthService {
       hashedRefreshToken,
       accessTokenExpiresAt,
       refreshTokenExpiresAt,
-    } = await this.generateTokens(payload, authUser.sessionId);
+    } = await this.generateTokens(payload, sessionUser.sessionId);
 
     await this.db
       .update(sessionsSchema.sessions)
@@ -204,13 +204,22 @@ export class AuthService {
         hashedRefreshToken,
         expiresAt: refreshTokenExpiresAt,
       })
-      .where(eq(sessionsSchema.sessions.id, authUser.sessionId));
+      .where(eq(sessionsSchema.sessions.id, sessionUser.sessionId));
 
     return {
-      accessToken,
-      refreshToken,
-      accessTokenExpiresAt,
-      refreshTokenExpiresAt,
+      access: { token: accessToken, expiresAt: accessTokenExpiresAt },
+      refresh: { token: refreshToken, expiresAt: refreshTokenExpiresAt },
     };
+  }
+
+  async verifyAccessToken(token: string): Promise<AccessTokenPayload | null> {
+    try {
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: this.configService.getOrThrow('ACCESS_TOKEN_SECRET'),
+      });
+      return payload;
+    } catch (error) {
+      return null;
+    }
   }
 }

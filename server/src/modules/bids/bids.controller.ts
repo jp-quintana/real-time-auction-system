@@ -28,8 +28,8 @@ export class BidsController {
   placeBid(
     @Param('auctionId') id: string,
     @Body() createBidDto: CreateBidDto,
-    @CurrentUser('userId') requestUserId: string,
+    @CurrentUser('userId') userId: string,
   ) {
-    return this.bidsService.placeBid(id, requestUserId, createBidDto);
+    return this.bidsService.placeBid(id, userId, createBidDto);
   }
 }
