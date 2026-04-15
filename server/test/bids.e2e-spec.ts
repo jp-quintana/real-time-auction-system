@@ -4,38 +4,25 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import cookieParser from 'cookie-parser';
-import { DATABASE_CONNECTION, PREFIX } from 'src/common/constants';
+import {
+  DATABASE_CONNECTION,
+  CACHE_CONNECTION,
+  PREFIX,
+} from 'src/common/constants';
 import { setupTestDb, teardownTestDb, type TestDb } from './setup-test-db';
+import {
+  setupTestCache,
+  teardownTestCache,
+  type TestCache,
+} from './setup-test-cache';
 import { eq } from 'drizzle-orm';
 import * as auctionsSchema from '../src/modules/auctions/schemas';
 import * as bidsSchema from '../src/modules/bids/schemas';
 
-const debugPause = (connectionUri: string, minutes = 10): Promise<void> => {
-  return new Promise((resolve) => {
-    console.log('\n──────────────────────────────────────');
-    console.log('DEBUG PAUSE — connect via pgAdmin:');
-    console.log(connectionUri);
-    console.log(`Resuming in ${minutes} minutes. Press any key to continue...`);
-    console.log('──────────────────────────────────────\n');
-
-    const timer = setTimeout(resolve, minutes * 60 * 1000);
-
-    if (process.stdin.isTTY) {
-      process.stdin.setRawMode(true);
-      process.stdin.resume();
-      process.stdin.once('data', () => {
-        process.stdin.setRawMode(false);
-        process.stdin.pause();
-        clearTimeout(timer);
-        resolve();
-      });
-    }
-  });
-};
-
 describe('POST /auctions/:auctionId/bids (e2e)', () => {
   let app: INestApplication<App>;
   let testDb: TestDb;
+  let testCache: TestCache;
 
   let sellerCookies: string[];
   let bidderCookies: string[];
@@ -48,12 +35,15 @@ describe('POST /auctions/:auctionId/bids (e2e)', () => {
 
   beforeAll(async () => {
     testDb = await setupTestDb();
+    testCache = await setupTestCache();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
       .overrideProvider(DATABASE_CONNECTION)
       .useValue(testDb.db)
+      .overrideProvider(CACHE_CONNECTION)
+      .useValue(testCache.client)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -113,9 +103,8 @@ describe('POST /auctions/:auctionId/bids (e2e)', () => {
 
   afterAll(
     async () => {
-      // Uncomment to pause and inspect the test DB via pgAdmin before teardown
-      // await debugPause(testDb.connectionUri, 10);
       await app.close();
+      await teardownTestCache(testCache);
       await teardownTestDb(testDb);
     },
     11 * 60 * 1000,
