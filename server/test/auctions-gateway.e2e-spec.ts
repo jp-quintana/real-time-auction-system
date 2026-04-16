@@ -20,6 +20,10 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { BidPlacedEvent, AuctionClosedEvent } from 'src/modules/auctions/types';
 import { parse as parseCookie } from 'cookie';
+import { AuctionsGateway } from 'src/modules/auctions/auctions.gateway';
+import { AuthService } from 'src/modules/auth/auth.service';
+import { AuctionsService } from 'src/modules/auctions/auctions.service';
+import type { Socket as ServerSocket } from 'src/common/types';
 
 function extractUserId(cookies: string[]): string {
   for (const c of cookies) {
@@ -489,6 +493,234 @@ describe('AuctionsGateway (e2e)', () => {
 
       await new Promise((r) => setTimeout(r, 500));
       expect(receivedAfterUnsub).toBe(false);
+    });
+  });
+
+  describe('full wiring: REST bid placement → socket bid:placed', () => {
+    it('should deliver bid:placed over WebSocket when a bid is placed via REST', async () => {
+      const socket = connectSocket(bidder2Cookies);
+      await waitForConnect(socket);
+
+      await new Promise<void>((resolve) => {
+        socket.emit('auction:subscribe', { auctionId }, () => resolve());
+      });
+
+      const bidPlacedPromise = waitForEvent<{
+        bidId: string;
+        auctionId: string;
+        amount: number;
+        bidderId: string;
+      }>(socket, 'bid:placed');
+
+      await request(app.getHttpServer())
+        .post(`/${PREFIX}/auctions/${auctionId}/bids`)
+        .set('Cookie', bidderCookies)
+        .send({ amount: 150 })
+        .expect(201);
+
+      const received = await bidPlacedPromise;
+
+      expect(received).toMatchObject({
+        auctionId,
+        amount: 150,
+      });
+      expect(received.bidId).toBeDefined();
+      expect(received.bidderId).toBeDefined();
+    });
+  });
+});
+
+// ── Unit tests (mocked socket, no app bootstrap) ───────────────────
+
+describe('AuctionsGateway (unit)', () => {
+  let gateway: AuctionsGateway;
+  let authService: jest.Mocked<Pick<AuthService, 'verifyAccessToken'>>;
+  let auctionsService: jest.Mocked<Pick<AuctionsService, 'findOneById'>>;
+  let mockEmit: jest.Mock;
+  let mockTo: jest.Mock;
+
+  function createMockSocket(
+    cookie?: string,
+  ): ServerSocket & { join: jest.Mock; leave: jest.Mock } {
+    return {
+      id: 'socket-1',
+      data: {},
+      join: jest.fn(),
+      leave: jest.fn(),
+      handshake: { headers: { cookie } },
+    } as any;
+  }
+
+  beforeEach(() => {
+    authService = { verifyAccessToken: jest.fn() };
+    auctionsService = { findOneById: jest.fn() };
+
+    gateway = new AuctionsGateway(
+      authService as unknown as AuthService,
+      auctionsService as unknown as AuctionsService,
+    );
+
+    mockEmit = jest.fn();
+    mockTo = jest.fn().mockReturnValue({ emit: mockEmit });
+    gateway.server = { to: mockTo } as any;
+  });
+
+  describe('handleConnection', () => {
+    it('should join the user room when token is valid', async () => {
+      const client = createMockSocket('access_token=valid-jwt');
+      authService.verifyAccessToken.mockResolvedValue({
+        userId: 'user-1',
+        email: 'a@b.com',
+        role: 'user',
+        iat: 0,
+        exp: 0,
+      });
+
+      await gateway.handleConnection(client);
+
+      expect(authService.verifyAccessToken).toHaveBeenCalledWith('valid-jwt');
+      expect(client.data.user).toEqual(
+        expect.objectContaining({ userId: 'user-1' }),
+      );
+      expect(client.join).toHaveBeenCalledWith('user:user-1');
+    });
+
+    it('should not join any room when no cookie is present', async () => {
+      const client = createMockSocket(undefined);
+
+      await gateway.handleConnection(client);
+
+      expect(authService.verifyAccessToken).not.toHaveBeenCalled();
+      expect(client.join).not.toHaveBeenCalled();
+      expect(client.data.user).toBeUndefined();
+    });
+
+    it('should not join any room when token verification fails', async () => {
+      const client = createMockSocket('access_token=bad-jwt');
+      authService.verifyAccessToken.mockResolvedValue(null);
+
+      await gateway.handleConnection(client);
+
+      expect(authService.verifyAccessToken).toHaveBeenCalledWith('bad-jwt');
+      expect(client.join).not.toHaveBeenCalled();
+      expect(client.data.user).toBeUndefined();
+    });
+  });
+
+  describe('handleAuctionSubscribe', () => {
+    it('should join the auction room when auction exists', async () => {
+      const client = createMockSocket();
+      auctionsService.findOneById.mockResolvedValue({ id: 'auction-1' } as any);
+
+      const result = await gateway.handleAuctionSubscribe(client, {
+        auctionId: 'auction-1',
+      });
+
+      expect(auctionsService.findOneById).toHaveBeenCalledWith('auction-1');
+      expect(client.join).toHaveBeenCalledWith('auction:auction-1');
+      expect(result).toEqual({ ok: true });
+    });
+
+    it('should propagate the error when auction does not exist', async () => {
+      const client = createMockSocket();
+      auctionsService.findOneById.mockRejectedValue(
+        new Error('Auction not found'),
+      );
+
+      await expect(
+        gateway.handleAuctionSubscribe(client, { auctionId: 'bad-id' }),
+      ).rejects.toThrow('Auction not found');
+      expect(client.join).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleAuctionUnsubscribe', () => {
+    it('should leave the auction room', async () => {
+      const client = createMockSocket();
+
+      const result = await gateway.handleAuctionUnsubscribe(client, {
+        auctionId: 'auction-1',
+      });
+
+      expect(client.leave).toHaveBeenCalledWith('auction:auction-1');
+      expect(result).toEqual({ ok: true });
+    });
+  });
+
+  describe('handleBidPlaced', () => {
+    const baseBid = {
+      id: 'bid-1',
+      auctionId: 'auction-1',
+      amount: 200,
+      bidderId: 'bidder-1',
+      createdAt: new Date('2025-01-01'),
+      updatedAt: new Date('2025-01-01'),
+      deletedAt: null,
+    };
+
+    it('should emit bid:placed to the auction room', () => {
+      const event: BidPlacedEvent = {
+        bid: baseBid,
+        auctionEndTime: new Date(),
+        previousHighBidderId: null,
+      };
+
+      gateway.handleBidPlaced(event);
+
+      expect(mockTo).toHaveBeenCalledWith('auction:auction-1');
+      expect(mockEmit).toHaveBeenCalledWith(
+        'bid:placed',
+        expect.objectContaining({
+          bidId: 'bid-1',
+          auctionId: 'auction-1',
+          amount: 200,
+          bidderId: 'bidder-1',
+        }),
+      );
+    });
+
+    it('should emit bid:outbid to the previous high bidder user room', () => {
+      const event: BidPlacedEvent = {
+        bid: baseBid,
+        auctionEndTime: new Date(),
+        previousHighBidderId: 'prev-bidder',
+      };
+
+      gateway.handleBidPlaced(event);
+
+      expect(mockTo).toHaveBeenCalledWith('auction:auction-1');
+      expect(mockTo).toHaveBeenCalledWith('user:prev-bidder');
+    });
+
+    it('should NOT emit bid:outbid when same bidder places a higher bid', () => {
+      const event: BidPlacedEvent = {
+        bid: { ...baseBid, bidderId: 'same-bidder' },
+        auctionEndTime: new Date(),
+        previousHighBidderId: 'same-bidder',
+      };
+
+      gateway.handleBidPlaced(event);
+
+      expect(mockTo).toHaveBeenCalledTimes(1);
+      expect(mockTo).toHaveBeenCalledWith('auction:auction-1');
+    });
+  });
+
+  describe('handleAuctionClosed', () => {
+    it('should emit auction:closed to the auction room', () => {
+      const event: AuctionClosedEvent = {
+        auctionId: 'auction-1',
+        winningBidAmount: 1000,
+        winningBidderId: 'winner-1',
+      };
+
+      gateway.handleAuctionClosed(event);
+
+      expect(mockTo).toHaveBeenCalledWith('auction:auction-1');
+      expect(mockEmit).toHaveBeenCalledWith('auction:closed', {
+        winningBidAmount: 1000,
+        winningBidderId: 'winner-1',
+      });
     });
   });
 });
