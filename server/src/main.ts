@@ -8,6 +8,8 @@ import {
   PREFIX,
   REFRESH_TOKEN_COOKIE_NAME,
 } from './common/constants';
+import { RedisIoAdapter } from './adapters';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -49,6 +51,13 @@ async function bootstrap() {
       },
     );
   }
+
+  const configService = app.get(ConfigService);
+  const redisIoAdapter = new RedisIoAdapter(app, configService);
+  await redisIoAdapter.connectToRedis();
+
+  app.useWebSocketAdapter(redisIoAdapter);
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

@@ -10,7 +10,7 @@ import { CreateUserDto } from '../users/dtos';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
-import type { AuthTokens, AuthUser } from 'src/common/types';
+import type { AuthSession, RefreshTokenPayload } from 'src/common/types';
 import { LoginUserDto } from './dtos';
 import { RefreshGuard } from 'src/common/guards';
 import { CurrentUser } from 'src/common/decorators';
@@ -35,18 +35,18 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
-  private setCookies(res: Response, tokens: AuthTokens) {
-    const { accessToken, refreshToken } = tokens;
+  private setCookies(res: Response, authSession: AuthSession) {
+    const { access, refresh } = authSession;
     const isProd = this.configService.getOrThrow('NODE_ENV') === 'production';
 
-    res.cookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, {
+    res.cookie(ACCESS_TOKEN_COOKIE_NAME, access.token, {
       httpOnly: true,
       secure: isProd,
       sameSite: 'lax',
       maxAge: +this.configService.getOrThrow('ACCESS_TOKEN_COOKIE_MAX_AGE'),
     });
 
-    res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
+    res.cookie(REFRESH_TOKEN_COOKIE_NAME, refresh.token, {
       httpOnly: true,
       secure: isProd,
       sameSite: 'lax',
@@ -112,11 +112,11 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'Tokens refreshed successfully' })
   @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_EXPIRED })
   async refresh(
-    @CurrentUser() authUser: AuthUser,
+    @CurrentUser() user: RefreshTokenPayload,
     @Res({ passthrough: true }) res: Response,
   ) {
     try {
-      const payload = await this.authService.refresh(authUser);
+      const payload = await this.authService.refresh(user);
 
       this.setCookies(res, payload);
 

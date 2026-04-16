@@ -61,9 +61,9 @@ export class AuctionsController {
   })
   create(
     @Body() createAuctionDto: CreateAuctionDto,
-    @CurrentUser('userId') requestUserId: string,
+    @CurrentUser('userId') userId: string,
   ) {
-    return this.auctionsService.create(requestUserId, createAuctionDto);
+    return this.auctionsService.create(userId, createAuctionDto);
   }
 
   @Patch(':id')
@@ -84,9 +84,9 @@ export class AuctionsController {
   update(
     @Param('id') id: string,
     @Body() updateAuctionDto: UpdateAuctionDto,
-    @CurrentUser('userId') requestUserId: string,
+    @CurrentUser('userId') userId: string,
   ) {
-    return this.auctionsService.update(id, requestUserId, updateAuctionDto);
+    return this.auctionsService.update(id, userId, updateAuctionDto);
   }
 
   @Delete(':id')
@@ -98,10 +98,7 @@ export class AuctionsController {
   @ApiResponse({ status: 403, description: ERROR_MESSAGES.ITEM_NOT_OWNER })
   @ApiResponse({ status: 404, description: ERROR_MESSAGES.AUCTION_NOT_FOUND })
   @ApiResponse({ status: 409, description: ERROR_MESSAGES.AUCTION_DELETE_FAIL })
-  delete(
-    @Param('id') id: string,
-    @CurrentUser('userId') requestUserId: string,
-  ) {
-    return this.auctionsService.remove(id, requestUserId);
+  delete(@Param('id') id: string, @CurrentUser('userId') userId: string) {
+    return this.auctionsService.remove(id, userId);
   }
 }

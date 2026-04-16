@@ -9,5 +9,6 @@ import { DatabaseModule } from '../database/database.module';
   imports: [UsersModule, JwtModule.register({}), DatabaseModule],
   controllers: [AuthController],
   providers: [AuthService],
+  exports: [AuthService],
 })
 export class AuthModule {}

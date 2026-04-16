@@ -1,4 +1,4 @@
-import { eq, relations, sql } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import { uniqueIndex } from 'drizzle-orm/pg-core';
 import { numeric } from 'drizzle-orm/pg-core';
 import { pgTable, uuid, timestamp, pgEnum } from 'drizzle-orm/pg-core';

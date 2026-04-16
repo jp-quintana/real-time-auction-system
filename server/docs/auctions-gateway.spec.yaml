@@ -1,0 +1,118 @@
+namespace: /auctions
+transport: websocket (Socket.IO)
+
+connection:
+  description: >
+    On connect the gateway extracts the access_token cookie from the
+    handshake headers. If the token is valid the socket joins a personal
+    room (user:{userId}) and client.data.user is populated.
+    Unauthenticated clients still connect but receive no user-targeted events.
+
+channels:
+  auction/subscribe:
+    subscribe:
+      description: Join the auction room to receive real-time events for that auction.
+      message:
+        payload:
+          type: object
+          required: [auctionId]
+          properties:
+            auctionId:
+              type: string
+              format: uuid
+      ack:
+        payload:
+          type: object
+          properties:
+            ok:
+              type: boolean
+      errors:
+        - event: exception
+          when: Auction does not exist.
+
+  auction/unsubscribe:
+    subscribe:
+      description: Leave the auction room and stop receiving events for that auction.
+      message:
+        payload:
+          type: object
+          required: [auctionId]
+          properties:
+            auctionId:
+              type: string
+              format: uuid
+      ack:
+        payload:
+          type: object
+          properties:
+            ok:
+              type: boolean
+
+  bid/placed:
+    publish:
+      description: >
+        Broadcast to all clients in the auction room when a new bid is placed.
+        Triggered internally by the bid.placed event (emitted by BidsService
+        after a successful bid insertion via the REST endpoint).
+      room: "auction:{auctionId}"
+      message:
+        payload:
+          type: object
+          properties:
+            bidId:
+              type: string
+              format: uuid
+            auctionId:
+              type: string
+              format: uuid
+            amount:
+              type: number
+            bidderId:
+              type: string
+              format: uuid
+            placedAt:
+              type: string
+              format: date-time
+
+  bid/outbid:
+    publish:
+      description: >
+        Sent to the previous highest bidder's personal room when they are
+        outbid by a different user. Not sent when the same bidder raises
+        their own bid.
+      room: "user:{previousHighBidderId}"
+      message:
+        payload:
+          type: object
+          properties:
+            auctionId:
+              type: string
+              format: uuid
+            newAmount:
+              type: number
+
+  auction/closed:
+    publish:
+      description: >
+        Broadcast to all clients in the auction room when the auction closes.
+        Triggered internally by the auction.closed event.
+      room: "auction:{auctionId}"
+      message:
+        payload:
+          type: object
+          properties:
+            winningBidAmount:
+              type: number
+            winningBidderId:
+              type: string
+              format: uuid
+
+rooms:
+  - pattern: "user:{userId}"
+    joined_on: connection (when authenticated)
+    purpose: Deliver user-targeted events such as bid/outbid.
+
+  - pattern: "auction:{auctionId}"
+    joined_on: auction/subscribe
+    left_on: auction/unsubscribe or disconnect
+    purpose: Deliver auction-scoped broadcasts (bid/placed, auction/closed).

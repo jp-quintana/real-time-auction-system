@@ -57,9 +57,9 @@ export class ItemsController {
   @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_MISSING })
   create(
     @Body() createItemDto: CreateItemDto,
-    @CurrentUser('userId') requestUserId: string,
+    @CurrentUser('userId') userId: string,
   ) {
-    return this.itemsService.create(requestUserId, createItemDto);
+    return this.itemsService.create(userId, createItemDto);
   }
 
   @Patch(':id')
@@ -72,8 +72,8 @@ export class ItemsController {
   update(
     @Param('id') id: string,
     @Body() updateItemDto: UpdateItemDto,
-    @CurrentUser('userId') requestUserId: string,
+    @CurrentUser('userId') userId: string,
   ) {
-    return this.itemsService.update(id, requestUserId, updateItemDto);
+    return this.itemsService.update(id, userId, updateItemDto);
   }
 }

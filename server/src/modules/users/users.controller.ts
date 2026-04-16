@@ -42,8 +42,8 @@ export class UsersController {
   })
   @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_MISSING })
   @ApiResponse({ status: 404, description: ERROR_MESSAGES.USER_NOT_FOUND })
-  getProfile(@CurrentUser('userId') requestUserId: string) {
-    return this.usersService.findOneById(requestUserId);
+  getProfile(@CurrentUser('userId') userId: string) {
+    return this.usersService.findOneById(userId);
   }
 
   @Get('me/items')
@@ -51,9 +51,9 @@ export class UsersController {
   @ApiOperation({ summary: 'Get items belonging to the current user' })
   @ApiResponse({ status: 200, description: 'User items returned successfully' })
   @ApiResponse({ status: 401, description: ERROR_MESSAGES.TOKEN_MISSING })
-  getUserItems(@CurrentUser('userId') requestUserId: string) {
+  getUserItems(@CurrentUser('userId') userId: string) {
     return this.itemsService.findAll(
-      { sellerId: requestUserId },
+      { sellerId: userId },
       { seller: false, auctions: true },
     );
   }
