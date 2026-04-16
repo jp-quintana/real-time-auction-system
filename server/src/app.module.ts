@@ -7,10 +7,12 @@ import { ItemsModule } from './modules/items/items.module';
 import { AuctionsModule } from './modules/auctions/auctions.module';
 import { BidsModule } from './modules/bids/bids.module';
 import { CacheModule } from './modules/cache/cache.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    EventEmitterModule.forRoot(),
     DatabaseModule,
     UsersModule,
     AuthModule,
