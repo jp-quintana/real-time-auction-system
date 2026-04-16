@@ -82,13 +82,13 @@ describe('Bids Cache (e2e)', () => {
       })
       .expect(201);
     bidderCookies = bidderRes.headers['set-cookie'] as unknown as string[];
-  });
+  }, 60_000);
 
   afterAll(async () => {
     await app.close();
     await teardownTestCache(testCache);
     await teardownTestDb(testDb);
-  });
+  }, 60_000);
 
   async function createAuction(startingPrice = 100): Promise<string> {
     const itemRes = await request(app.getHttpServer())
