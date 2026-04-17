@@ -8,6 +8,8 @@ export interface BidPlacedEvent {
 
 export interface AuctionClosedEvent {
   auctionId: string;
-  winningBidAmount: number;
-  winningBidderId: string;
+  winningBid: {
+    amount: number;
+    bidderEmail: string;
+  };
 }

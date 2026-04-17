@@ -8,13 +8,24 @@ import {
 } from '@nestjs/common';
 import { AuctionsQueryDto, CreateAuctionDto } from './dtos';
 import * as auctionsSchema from './schemas';
-import { and, desc, eq, gt, gte, isNull, notExists, sql } from 'drizzle-orm';
+import {
+  and,
+  desc,
+  eq,
+  exists,
+  gt,
+  gte,
+  isNull,
+  notExists,
+  sql,
+} from 'drizzle-orm';
 import {
   AuctionsQueryRelations,
   type Database,
   Transaction,
 } from 'src/common/types';
 import {
+  AUCTION_CLOSING_QUEUE,
   AUCTION_SORT_CREATED_AT_ASC,
   AUCTION_SORT_CREATED_AT_DESC,
   AUCTION_SORT_ENDING_SOONEST,
@@ -27,6 +38,8 @@ import { ItemsService } from '../items/items.service';
 import { UpdateAuctionDto } from './dtos/update-auction.dto';
 import * as bidsSchema from '../bids/schemas';
 import * as itemsSchema from '../items/schemas';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Job, Queue } from 'bullmq';
 
 @Injectable()
 export class AuctionsService {
@@ -34,6 +47,8 @@ export class AuctionsService {
     @Inject(DATABASE_CONNECTION)
     private readonly db: Database,
     private readonly itemsService: ItemsService,
+    @InjectQueue(AUCTION_CLOSING_QUEUE)
+    private readonly auctionClosingQueue: Queue,
   ) {}
 
   async findAll(
@@ -129,7 +144,7 @@ export class AuctionsService {
   }
 
   async create(sellerId: string, createAuctionDto: CreateAuctionDto) {
-    return this.db.transaction(async (tx) => {
+    const auction = await this.db.transaction(async (tx) => {
       const item = await this.itemsService.lockByIdForUpdate(
         createAuctionDto.itemId,
         tx,
@@ -160,6 +175,14 @@ export class AuctionsService {
         throw error;
       }
     });
+
+    this.auctionClosingQueue.add(
+      'close',
+      { auctionId: auction.id },
+      { delay: auction.endTime.getTime() - Date.now(), jobId: auction.id },
+    );
+
+    return auction;
   }
 
   async update(
@@ -223,6 +246,16 @@ export class AuctionsService {
     if (!updated)
       throw new ConflictException(ERROR_MESSAGES.AUCTION_UPDATE_FAIL);
 
+    if (updated.endTime.getTime() !== auction.endTime.getTime()) {
+      const existingJob = await this.auctionClosingQueue.getJob(auctionId);
+      if (existingJob) await existingJob.remove();
+      this.auctionClosingQueue.add(
+        'close',
+        { auctionId: auction.id },
+        { delay: updated.endTime.getTime() - Date.now(), jobId: auction.id },
+      );
+    }
+
     return updated;
   }
 
@@ -260,6 +293,9 @@ export class AuctionsService {
 
     if (!deleted)
       throw new ConflictException(ERROR_MESSAGES.AUCTION_DELETE_FAIL);
+
+    const existingJob = await this.auctionClosingQueue.getJob(auctionId);
+    if (existingJob) await existingJob.remove();
 
     return deleted;
   }

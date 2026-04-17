@@ -11,5 +11,6 @@ import { BidsCacheService } from './bids-cache.service';
   imports: [DatabaseModule, JwtModule, AuctionsModule, CacheModule],
   providers: [BidsService, BidsCacheService],
   controllers: [BidsController],
+  exports: [BidsCacheService],
 })
 export class BidsModule {}
