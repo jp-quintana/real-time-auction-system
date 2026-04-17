@@ -62,7 +62,7 @@ export class AuctionClosingService {
 
     await this.bidsCacheService.removeHighestBid(closedAuction.id);
     this.eventEmitter.emit('auction.closed', {
-      auction: closedAuction,
+      auctionId: closedAuction.id,
       winningBid: winner
         ? {
             amount: Number(winner.bid.amount),
