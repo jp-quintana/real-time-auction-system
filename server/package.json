@@ -19,7 +19,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json --detectOpenHandles"
+    "test:e2e": "bash -c 'set -o pipefail; jest --config ./test/jest-e2e.json --detectOpenHandles 2>&1 | tee ./test/e2e-results.log'"
   },
   "dependencies": {
     "@nestjs/bullmq": "^11.0.4",

@@ -182,8 +182,8 @@ describe('Auction Closing (e2e)', () => {
       data: { auctionId: auction.id },
     } as unknown as Job<{ auctionId: string }, void, 'close'>;
 
-    await expect(closingProcessor.process(job)).resolves.toBeDefined();
-    await expect(closingProcessor.process(job)).resolves.toBeDefined();
+    await closingProcessor.process(job);
+    await closingProcessor.process(job);
 
     collected.stop();
 
