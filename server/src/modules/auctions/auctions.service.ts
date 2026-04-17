@@ -176,7 +176,7 @@ export class AuctionsService {
       }
     });
 
-    this.auctionClosingQueue.add(
+    await this.auctionClosingQueue.add(
       'close',
       { auctionId: auction.id },
       { delay: auction.endTime.getTime() - Date.now(), jobId: auction.id },
@@ -249,7 +249,7 @@ export class AuctionsService {
     if (updated.endTime.getTime() !== auction.endTime.getTime()) {
       const existingJob = await this.auctionClosingQueue.getJob(auctionId);
       if (existingJob) await existingJob.remove();
-      this.auctionClosingQueue.add(
+      await this.auctionClosingQueue.add(
         'close',
         { auctionId: auction.id },
         { delay: updated.endTime.getTime() - Date.now(), jobId: auction.id },
