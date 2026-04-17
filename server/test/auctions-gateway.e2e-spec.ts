@@ -95,6 +95,8 @@ describe('AuctionsGateway (e2e)', () => {
     testDb = await setupTestDb();
     testCache = await setupTestCache();
 
+    process.env.REDIS_QUEUE_URL = testCache.connectionUri;
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -403,16 +405,21 @@ describe('AuctionsGateway (e2e)', () => {
 
       const event: AuctionClosedEvent = {
         auctionId,
-        winningBidAmount: 1000,
-        winningBidderId: 'winner-123',
+        winningBid: {
+          amount: 1000,
+          bidderEmail: 'winner@test.com',
+        },
       };
 
       eventEmitter.emit('auction.closed', event);
 
       const received = await closedPromise;
       expect(received).toEqual({
-        winningBidAmount: 1000,
-        winningBidderId: 'winner-123',
+        auctionId,
+        winningBid: {
+          amount: 1000,
+          bidderEmail: 'winner@test.com',
+        },
       });
     });
 
@@ -428,8 +435,10 @@ describe('AuctionsGateway (e2e)', () => {
 
       const event: AuctionClosedEvent = {
         auctionId,
-        winningBidAmount: 999,
-        winningBidderId: 'winner-456',
+        winningBid: {
+          amount: 999,
+          bidderEmail: 'winner-no-room@test.com',
+        },
       };
 
       eventEmitter.emit('auction.closed', event);
@@ -710,16 +719,21 @@ describe('AuctionsGateway (unit)', () => {
     it('should emit auction:closed to the auction room', () => {
       const event: AuctionClosedEvent = {
         auctionId: 'auction-1',
-        winningBidAmount: 1000,
-        winningBidderId: 'winner-1',
+        winningBid: {
+          amount: 1000,
+          bidderEmail: 'winner@test.com',
+        },
       };
 
       gateway.handleAuctionClosed(event);
 
       expect(mockTo).toHaveBeenCalledWith('auction:auction-1');
       expect(mockEmit).toHaveBeenCalledWith('auction:closed', {
-        winningBidAmount: 1000,
-        winningBidderId: 'winner-1',
+        auctionId: 'auction-1',
+        winningBid: {
+          amount: 1000,
+          bidderEmail: 'winner@test.com',
+        },
       });
     });
   });
