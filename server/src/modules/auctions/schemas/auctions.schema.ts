@@ -9,6 +9,7 @@ import {
 import { timestamps } from 'src/common/schemas';
 import { bids } from 'src/modules/bids/schemas';
 import { items } from 'src/modules/items/schemas';
+import { users } from 'src/modules/users/schemas';
 
 export const statusEnum = pgEnum('status', AUCTION_STATUS_VALUES);
 
@@ -26,6 +27,9 @@ export const auctions = pgTable(
     itemId: uuid('item_id')
       .references(() => items.id, { onDelete: 'cascade' })
       .notNull(),
+    winnerId: uuid('winner_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
     ...timestamps,
   },
   (table) => [
@@ -41,6 +45,10 @@ export const auctionRelations = relations(auctions, ({ one, many }) => ({
   item: one(items, {
     fields: [auctions.itemId],
     references: [items.id],
+  }),
+  winner: one(users, {
+    fields: [auctions.winnerId],
+    references: [users.id],
   }),
   bids: many(bids),
 }));

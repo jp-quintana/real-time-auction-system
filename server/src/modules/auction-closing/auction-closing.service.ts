@@ -24,9 +24,9 @@ export class AuctionClosingService {
 
   async close(auctionId: string) {
     const { closedAuction, winner } = await this.db.transaction(async (tx) => {
-      const [closedAuction] = await tx
-        .update(auctionsSchema.auctions)
-        .set({ status: AUCTION_STATUS_CLOSED })
+      const [auction] = await tx
+        .select()
+        .from(auctionsSchema.auctions)
         .where(
           and(
             isNull(auctionsSchema.auctions.deletedAt),
@@ -35,9 +35,9 @@ export class AuctionClosingService {
             sql`${auctionsSchema.auctions.endTime} <= now()`,
           ),
         )
-        .returning();
+        .for('update');
 
-      if (!closedAuction)
+      if (!auction)
         throw new NotFoundException(ERROR_MESSAGES.AUCTION_NOT_FOUND);
 
       const [winningBid] = await tx
@@ -53,6 +53,15 @@ export class AuctionClosingService {
         .where(eq(bidsSchema.bids.auctionId, auctionId))
         .orderBy(desc(bidsSchema.bids.amount))
         .limit(1);
+
+      const [closedAuction] = await tx
+        .update(auctionsSchema.auctions)
+        .set({
+          status: AUCTION_STATUS_CLOSED,
+          winnerId: winningBid ? winningBid.bidder.id : null,
+        })
+        .where(eq(auctionsSchema.auctions.id, auctionId))
+        .returning();
 
       return {
         closedAuction,
