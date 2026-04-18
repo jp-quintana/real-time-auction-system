@@ -41,7 +41,7 @@ export class CreateAuctionDto {
   })
   @Type(() => Date)
   @IsDate()
-  @MinDate(() => new Date())
+  @MinDate(() => new Date(Date.now() + 60 * 1000))
   @IsAfter('startTime')
   endTime: Date;
 }

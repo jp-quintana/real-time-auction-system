@@ -38,6 +38,14 @@ export class BidsCacheService implements OnModuleInit {
     return `${AUCTION_KEY_PREFIX}:${auctionId}:${AUCTION_HIGHEST_BID_KEY_SUFFIX}`;
   }
 
+  private computeBidCacheTtl(auctionEndTime: Date): number {
+    const bufferHours = 3;
+    const endMs = auctionEndTime.getTime();
+    const nowMs = Date.now();
+    const ttlMs = endMs - nowMs + bufferHours * 60 * 60 * 1000;
+    return Math.max(60, Math.floor(ttlMs / 1000));
+  }
+
   async getCachedHighestBid(auctionId: string): Promise<number | null> {
     const value = await this.cache.get(this.key(auctionId));
     return value === null ? null : Number(value);
@@ -60,11 +68,8 @@ export class BidsCacheService implements OnModuleInit {
     }
   }
 
-  private computeBidCacheTtl(auctionEndTime: Date): number {
-    const bufferHours = 3;
-    const endMs = auctionEndTime.getTime();
-    const nowMs = Date.now();
-    const ttlMs = endMs - nowMs + bufferHours * 60 * 60 * 1000;
-    return Math.max(60, Math.floor(ttlMs / 1000));
+  async removeHighestBid(auctionId: string) {
+    const key = this.key(auctionId);
+    await this.cache.del(key);
   }
 }

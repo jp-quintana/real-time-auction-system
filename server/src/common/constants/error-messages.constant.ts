@@ -13,6 +13,7 @@ export const ERROR_MESSAGES = {
   AUCTION_NEW_TIME_IN_PAST: 'New end time must be after current end time',
   AUCTION_UPDATE_FAIL: 'Auction cannot be updated in its current state',
   AUCTION_DELETE_FAIL: 'Auction cannot be deleted in its current state',
+  AUCTION_CLOSE_FAIL: 'Auction cannot be closed in its current state',
   AUCTION_COMPLETE: 'Auction has already ended',
   AUCTION_CANCELLED: 'Auction has been cancelled',
   AUCTION_NOT_ACTIVE: 'Auction is not active',

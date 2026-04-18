@@ -9,7 +9,7 @@ import { CACHE_CONNECTION } from 'src/common/constants';
     {
       provide: CACHE_CONNECTION,
       useFactory: (config: ConfigService) => {
-        return new Redis(config.getOrThrow('REDIS_URL'), {
+        return new Redis(config.getOrThrow('REDIS_CACHE_URL'), {
           maxRetriesPerRequest: 3,
         });
       },

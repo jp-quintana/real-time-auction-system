@@ -82,8 +82,8 @@ export class AuctionsGateway implements OnGatewayConnection {
   @OnEvent('auction.closed')
   handleAuctionClosed(event: AuctionClosedEvent) {
     this.server.to(`auction:${event.auctionId}`).emit('auction:closed', {
-      winningBidAmount: event.winningBidAmount,
-      winningBidderId: event.winningBidderId,
+      auctionId: event.auctionId,
+      winningBid: event.winningBid,
     });
   }
 }

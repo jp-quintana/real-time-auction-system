@@ -6,6 +6,7 @@ import { timestamps } from 'src/common/schemas';
 import { sessions } from 'src/modules/auth/schemas';
 import { bids } from 'src/modules/bids/schemas';
 import { items } from 'src/modules/items/schemas';
+import { auctions } from 'src/modules/auctions/schemas';
 
 export const roleEnum = pgEnum('role', USER_ROLES);
 
@@ -21,4 +22,5 @@ export const userRelations = relations(users, ({ many }) => ({
   sessions: many(sessions),
   items: many(items),
   bids: many(bids),
+  wonAuctions: many(auctions),
 }));

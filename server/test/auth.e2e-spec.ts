@@ -29,6 +29,8 @@ describe('Auth (e2e)', () => {
     testDb = await setupTestDb();
     testCache = await setupTestCache();
 
+    process.env.REDIS_QUEUE_URL = testCache.connectionUri;
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })

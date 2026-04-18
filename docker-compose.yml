@@ -19,18 +19,21 @@ services:
       - ./server/.env
     environment:
       DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
-      REDIS_URL: redis://redis-server:6379
+      REDIS_CACHE_URL: redis://redis-cache:6379
+      REDIS_QUEUE_URL: redis://redis-queue:6379
     command: npm run start:dev
     depends_on:
-      redis-server:
-        condition: service_started
       db:
         condition: service_healthy
+      redis-cache:
+        condition: service_started
+      redis-queue:
+        condition: service_started
 
   db:
     image: postgres:16-alpine
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -43,13 +46,23 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-  redis-server:
+  redis-cache:
     image: redis:7.4-alpine
+    command: redis-server --maxmemory 128mb --maxmemory-policy volatile-lru
     env_file: .env
     ports:
-      - "${REDIS_PORT}:6379"
+      - "${REDIS_CACHE_PORT}:6379"
+    # volumes:
+    #   - redis_cache_data:/data
+
+  redis-queue:
+    image: redis:7.4-alpine
+    command: redis-server --appendonly yes
+    env_file: .env
+    ports:
+      - "${REDIS_QUEUE_PORT}:6379"
     volumes:
-      - redis_data:/data
+      - redis_queue_data:/data
 
   redis-insight:
     image: redis/redisinsight:latest
@@ -58,5 +71,6 @@ services:
       - "${REDIS_INSIGHT_PORT}:5540"
 
 volumes:
-  redis_data:
+  # redis_cache_data:
   postgres_data:
+  redis_queue_data:
