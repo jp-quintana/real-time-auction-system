@@ -39,7 +39,7 @@ import { UpdateAuctionDto } from './dtos/update-auction.dto';
 import * as bidsSchema from '../bids/schemas';
 import * as itemsSchema from '../items/schemas';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Job, Queue } from 'bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class AuctionsService {

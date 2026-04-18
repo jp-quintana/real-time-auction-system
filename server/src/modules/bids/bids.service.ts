@@ -4,14 +4,21 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
-import { DATABASE_CONNECTION, ERROR_MESSAGES } from 'src/common/constants';
+import {
+  DATABASE_CONNECTION,
+  ERROR_MESSAGES,
+  NOTIFICATIONS_QUEUE,
+} from 'src/common/constants';
 import { CreateBidDto } from './dtos';
 import { AuctionsService } from '../auctions/auctions.service';
 import type { Database } from 'src/common/types';
 import * as bidsSchema from './schemas';
+import * as usersSchema from '../users/schemas';
 import { desc, eq } from 'drizzle-orm';
 import { BidsCacheService } from './bids-cache.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class BidsService {
@@ -21,6 +28,8 @@ export class BidsService {
     private readonly bidsCacheService: BidsCacheService,
     private readonly auctionsService: AuctionsService,
     private eventEmitter: EventEmitter2,
+    @InjectQueue(NOTIFICATIONS_QUEUE)
+    private readonly notificationsQueue: Queue,
   ) {}
 
   async placeBid(
@@ -35,8 +44,8 @@ export class BidsService {
       throw new BadRequestException(ERROR_MESSAGES.BID_TOO_LOW);
     }
 
-    const { bid, auctionEndTime, previousHighBidderId } =
-      await this.db.transaction(async (tx) => {
+    const { bid, auctionEndTime, previousHighBid } = await this.db.transaction(
+      async (tx) => {
         const auction = await this.auctionsService.lockByIdForUpdate(
           auctionId,
           tx,
@@ -46,18 +55,22 @@ export class BidsService {
           throw new ForbiddenException(ERROR_MESSAGES.BID_ITEM_OWNER);
         }
 
-        const [highestBid] = await tx
+        const [previousHighBid] = await tx
           .select({
             amount: bidsSchema.bids.amount,
-            bidderId: bidsSchema.bids.bidderId,
+            bidder: usersSchema.users,
           })
           .from(bidsSchema.bids)
           .where(eq(bidsSchema.bids.auctionId, auctionId))
+          .innerJoin(
+            usersSchema.users,
+            eq(usersSchema.users.id, bidsSchema.bids.bidderId),
+          )
           .orderBy(desc(bidsSchema.bids.amount))
           .limit(1);
 
-        const currentPrice = highestBid
-          ? Number(highestBid.amount)
+        const currentPrice = previousHighBid
+          ? Number(previousHighBid.amount)
           : Number(auction.startingPrice);
 
         if (createBidDto.amount <= currentPrice) {
@@ -76,9 +89,10 @@ export class BidsService {
         return {
           bid,
           auctionEndTime: auction.endTime,
-          previousHighBidderId: highestBid?.bidderId ?? null,
+          previousHighBid: previousHighBid ?? null,
         };
-      });
+      },
+    );
 
     try {
       await this.bidsCacheService.setHighestBidIfHigher(
@@ -93,8 +107,17 @@ export class BidsService {
     this.eventEmitter.emit('bid.placed', {
       bid: { ...bid, amount: Number(bid.amount) },
       auctionEndTime,
-      previousHighBidderId,
+      previousHighBidderId: previousHighBid?.bidder.id ?? null,
     });
+
+    if (previousHighBid) {
+      this.notificationsQueue.add('outbid', {
+        auctionId,
+        previousHighBidderEmail: previousHighBid.bidder.email,
+        previousHighBidAmount: Number(previousHighBid.amount),
+        newHighBidAmount: bid.amount,
+      });
+    }
 
     return bid;
   }
