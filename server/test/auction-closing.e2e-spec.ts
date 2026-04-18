@@ -151,6 +151,7 @@ describe('Auction Closing (e2e)', () => {
       .from(auctionsSchema.auctions)
       .where(eq(auctionsSchema.auctions.id, auction.id));
     expect(row.status).toBe(AUCTION_STATUS_CLOSED);
+    expect(row.winnerId).toBe(bidderId);
   }, 20_000);
 
   it('is idempotent when the processor runs twice for the same auction', async () => {
@@ -198,6 +199,7 @@ describe('Auction Closing (e2e)', () => {
       .from(auctionsSchema.auctions)
       .where(eq(auctionsSchema.auctions.id, auction.id));
     expect(row.status).toBe(AUCTION_STATUS_CLOSED);
+    expect(row.winnerId).toBe(bidderId);
   });
 
   it('closes an auction with no bids and emits null winningBid', async () => {
@@ -222,6 +224,7 @@ describe('Auction Closing (e2e)', () => {
       .from(auctionsSchema.auctions)
       .where(eq(auctionsSchema.auctions.id, auction.id));
     expect(row.status).toBe(AUCTION_STATUS_CLOSED);
+    expect(row.winnerId).toBeNull();
   }, 20_000);
 
   it('no-ops when the auction was cancelled before the job fires', async () => {
