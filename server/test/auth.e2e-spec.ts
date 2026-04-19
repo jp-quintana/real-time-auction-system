@@ -4,6 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import cookieParser from 'cookie-parser';
+import { MailerService, MAILER_OPTIONS } from '@nestjs-modules/mailer';
 import {
   DATABASE_CONNECTION,
   CACHE_CONNECTION,
@@ -38,6 +39,10 @@ describe('Auth (e2e)', () => {
       .useValue(testDb.db)
       .overrideProvider(CACHE_CONNECTION)
       .useValue(testCache.client)
+      .overrideProvider(MAILER_OPTIONS)
+      .useValue({ transport: { jsonTransport: true } })
+      .overrideProvider(MailerService)
+      .useValue({ sendMail: jest.fn().mockResolvedValue({ messageId: 'stub' }) })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -51,7 +56,7 @@ describe('Auth (e2e)', () => {
     );
     app.use(cookieParser());
     await app.init();
-  });
+  }, 60_000);
 
   afterAll(async () => {
     await app.close();

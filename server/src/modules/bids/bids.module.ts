@@ -5,12 +5,19 @@ import { DatabaseModule } from '../database/database.module';
 import { JwtModule } from '@nestjs/jwt';
 import { AuctionsModule } from '../auctions/auctions.module';
 import { CacheModule } from '../cache/cache.module';
-import { BidsCacheService } from './bids-cache.service';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { BidsCacheModule } from '../bids-cache/bids-cache.module';
 
 @Module({
-  imports: [DatabaseModule, JwtModule, AuctionsModule, CacheModule],
-  providers: [BidsService, BidsCacheService],
+  imports: [
+    DatabaseModule,
+    JwtModule,
+    AuctionsModule,
+    CacheModule,
+    NotificationsModule,
+    BidsCacheModule,
+  ],
+  providers: [BidsService],
   controllers: [BidsController],
-  exports: [BidsCacheService],
 })
 export class BidsModule {}

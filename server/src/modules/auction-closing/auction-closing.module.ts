@@ -4,16 +4,19 @@ import { AUCTION_CLOSING_QUEUE } from 'src/common/constants';
 import { AuctionClosingProcessor } from './auction-closing.processor';
 import { AuctionClosingService } from './auction-closing.service';
 import { DatabaseModule } from '../database/database.module';
-import { BidsModule } from '../bids/bids.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { BidsCacheModule } from '../bids-cache/bids-cache.module';
 
 @Module({
   imports: [
     DatabaseModule,
-    BidsModule,
     BullModule.registerQueue({
       name: AUCTION_CLOSING_QUEUE,
     }),
+    NotificationsModule,
+    BidsCacheModule,
   ],
   providers: [AuctionClosingProcessor, AuctionClosingService],
+  exports: [BullModule],
 })
 export class AuctionClosingModule {}
