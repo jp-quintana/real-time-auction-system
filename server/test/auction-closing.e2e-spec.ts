@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { AppModule } from './../src/app.module';
+import { MailerService, MAILER_OPTIONS } from '@nestjs-modules/mailer';
 import {
   DATABASE_CONNECTION,
   CACHE_CONNECTION,
@@ -104,6 +105,10 @@ describe('Auction Closing (e2e)', () => {
       .useValue(testDb.db)
       .overrideProvider(CACHE_CONNECTION)
       .useValue(testCache.client)
+      .overrideProvider(MAILER_OPTIONS)
+      .useValue({ transport: { jsonTransport: true } })
+      .overrideProvider(MailerService)
+      .useValue({ sendMail: jest.fn().mockResolvedValue({ messageId: 'stub' }) })
       .compile();
 
     app = moduleFixture.createNestApplication();
