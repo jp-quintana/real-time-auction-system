@@ -13,7 +13,16 @@ export class NotificationsProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<any, void, 'outbid'>): Promise<any> {
+  private previewEmail(info: any) {
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      console.log(`Preview: ${previewUrl}`);
+    }
+  }
+
+  async process(
+    job: Job<any, void, 'outbid' | 'auction-won' | 'auction-closed'>,
+  ): Promise<any> {
     switch (job.name) {
       case 'outbid': {
         const {
@@ -31,11 +40,44 @@ export class NotificationsProcessor extends WorkerHost {
         });
 
         if (this.configService.getOrThrow('NODE_ENV') !== 'production') {
-          const previewUrl = nodemailer.getTestMessageUrl(info);
-          if (previewUrl) {
-            console.log(`Preview: ${previewUrl}`);
-          }
+          this.previewEmail(info);
         }
+
+        return;
+      }
+
+      case 'auction-won': {
+        const { auctionId, winnerEmail, winnerBidAmount } = job.data;
+
+        const info = await this.mailerService.sendMail({
+          to: winnerEmail,
+          subject: 'You won!',
+          html: `<h1>Congratulations,</h1><br /><p>Congratulations, you won auction with id ${auctionId} with a bid of $${winnerBidAmount}.00.</p>`,
+        });
+
+        if (this.configService.getOrThrow('NODE_ENV') !== 'production') {
+          this.previewEmail(info);
+        }
+
+        return;
+      }
+
+      case 'auction-closed': {
+        const { itemId, sellerEmail, winnerId, winnerBidAmount } = job.data;
+
+        const info = await this.mailerService.sendMail({
+          to: sellerEmail,
+          subject: 'Auction closed!',
+          html: winnerId
+            ? `<h1>Hi there,</h1><br /><p>Your auction for item with id ${itemId} has ended. The winning bid was $${winnerBidAmount}.00 from user with id ${winnerId}.</p>`
+            : `<h1>Hi there,</h1><br /><p>Your auction for item with id ${itemId} has ended. No bids were received.</p>`,
+        });
+
+        if (this.configService.getOrThrow('NODE_ENV') !== 'production') {
+          this.previewEmail(info);
+        }
+
+        return;
       }
       default: {
         return;

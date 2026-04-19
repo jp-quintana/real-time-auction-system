@@ -111,7 +111,7 @@ export class BidsService {
     });
 
     if (previousHighBid) {
-      this.notificationsQueue.add('outbid', {
+      await this.notificationsQueue.add('outbid', {
         auctionId,
         previousHighBidderEmail: previousHighBid.bidder.email,
         previousHighBidAmount: Number(previousHighBid.amount),

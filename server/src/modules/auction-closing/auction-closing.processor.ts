@@ -18,9 +18,12 @@ export class AuctionClosingProcessor extends WorkerHost {
           if (error instanceof NotFoundException) return;
           throw error;
         }
+
+        return;
       }
+
       default: {
-        return {};
+        return;
       }
     }
   }
