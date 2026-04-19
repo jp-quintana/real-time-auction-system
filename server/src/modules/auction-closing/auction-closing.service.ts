@@ -55,10 +55,10 @@ export class AuctionClosingService {
           )
           .for('update');
 
-        const { auction, seller } = auctionAndSeller;
-
-        if (!auction)
+        if (!auctionAndSeller)
           throw new NotFoundException(ERROR_MESSAGES.AUCTION_NOT_FOUND);
+
+        const { seller } = auctionAndSeller;
 
         const [winningBid] = await tx
           .select({
