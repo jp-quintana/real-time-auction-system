@@ -18,7 +18,7 @@ import {
 } from './setup-test-cache';
 import { eq, count } from 'drizzle-orm';
 import * as bidsSchema from '../src/modules/bids/schemas';
-import { BidsCacheService } from '../src/modules/bids/bids-cache.service';
+import { BidsCacheService } from '../src/modules/bids-cache/bids-cache.service';
 
 function redisKey(auctionId: string) {
   return `auction:${auctionId}:highestBid`;
