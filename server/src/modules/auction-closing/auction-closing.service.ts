@@ -12,10 +12,10 @@ import * as auctionsSchema from '../auctions/schemas';
 import * as bidsSchema from '../bids/schemas';
 import * as usersSchema from '../users/schemas';
 import * as itemsSchema from '../items/schemas';
-import { BidsCacheService } from '../bids/bids-cache.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { BidsCacheService } from '../bids-cache/bids-cache.service';
 
 @Injectable()
 export class AuctionClosingService {

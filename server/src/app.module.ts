@@ -12,6 +12,7 @@ import { AuctionClosingModule } from './modules/auction-closing/auction-closing.
 import { BullModule } from '@nestjs/bullmq';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { BidsCacheModule } from './modules/bids-cache/bids-cache.module';
 import * as nodemailer from 'nodemailer';
 
 @Module({
@@ -64,6 +65,7 @@ import * as nodemailer from 'nodemailer';
     CacheModule,
     AuctionClosingModule,
     NotificationsModule,
+    BidsCacheModule,
   ],
   controllers: [],
 })

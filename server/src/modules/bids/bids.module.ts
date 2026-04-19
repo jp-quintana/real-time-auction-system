@@ -5,9 +5,8 @@ import { DatabaseModule } from '../database/database.module';
 import { JwtModule } from '@nestjs/jwt';
 import { AuctionsModule } from '../auctions/auctions.module';
 import { CacheModule } from '../cache/cache.module';
-import { BidsCacheService } from './bids-cache.service';
-import { BullModule } from '@nestjs/bullmq';
-import { NOTIFICATIONS_QUEUE } from 'src/common/constants';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { BidsCacheModule } from '../bids-cache/bids-cache.module';
 
 @Module({
   imports: [
@@ -15,12 +14,10 @@ import { NOTIFICATIONS_QUEUE } from 'src/common/constants';
     JwtModule,
     AuctionsModule,
     CacheModule,
-    BullModule.registerQueue({
-      name: NOTIFICATIONS_QUEUE,
-    }),
+    NotificationsModule,
+    BidsCacheModule,
   ],
-  providers: [BidsService, BidsCacheService],
+  providers: [BidsService],
   controllers: [BidsController],
-  exports: [BidsCacheService],
 })
 export class BidsModule {}

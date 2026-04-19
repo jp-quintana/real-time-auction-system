@@ -15,10 +15,10 @@ import type { Database } from 'src/common/types';
 import * as bidsSchema from './schemas';
 import * as usersSchema from '../users/schemas';
 import { desc, eq } from 'drizzle-orm';
-import { BidsCacheService } from './bids-cache.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { BidsCacheService } from '../bids-cache/bids-cache.service';
 
 @Injectable()
 export class BidsService {

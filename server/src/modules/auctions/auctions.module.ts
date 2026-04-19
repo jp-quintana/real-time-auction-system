@@ -6,8 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ItemsModule } from '../items/items.module';
 import { AuctionsGateway } from './auctions.gateway';
 import { AuthModule } from '../auth/auth.module';
-import { AUCTION_CLOSING_QUEUE } from 'src/common/constants';
-import { BullModule } from '@nestjs/bullmq';
+import { AuctionClosingModule } from '../auction-closing/auction-closing.module';
 
 @Module({
   imports: [
@@ -15,9 +14,7 @@ import { BullModule } from '@nestjs/bullmq';
     JwtModule,
     ItemsModule,
     AuthModule,
-    BullModule.registerQueue({
-      name: AUCTION_CLOSING_QUEUE,
-    }),
+    AuctionClosingModule,
   ],
   providers: [AuctionsService, AuctionsGateway],
   controllers: [AuctionsController],
