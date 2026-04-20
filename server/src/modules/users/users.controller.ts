@@ -1,7 +1,7 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { AdminGuard, AuthGuard } from 'src/common/guards';
-import { CurrentUser } from 'src/common/decorators';
+import { RolesGuard, AuthGuard } from 'src/common/guards';
+import { CurrentUser, Roles } from 'src/common/decorators';
 import { ItemsService } from '../items/items.service';
 import {
   ApiTags,
@@ -21,7 +21,8 @@ export class UsersController {
   ) {}
 
   @Get()
-  @UseGuards(AuthGuard, AdminGuard)
+  @Roles('admin')
+  @UseGuards(AuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Get all users (admin only)' })
   @ApiResponse({
     status: 200,

@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ItemsService } from './items.service';
-import { AdminGuard, AuthGuard } from 'src/common/guards';
+import { RolesGuard, AuthGuard } from 'src/common/guards';
 import { CurrentUser } from 'src/common/decorators';
 import { CreateItemDto, ItemsQueryDto, UpdateItemDto } from './dtos';
 import {
@@ -19,6 +19,7 @@ import {
   ApiCookieAuth,
 } from '@nestjs/swagger';
 import { ACCESS_TOKEN_COOKIE_NAME, ERROR_MESSAGES } from 'src/common/constants';
+import { Roles } from 'src/common/decorators/roles.decorator';
 
 @ApiTags('items')
 @ApiCookieAuth(ACCESS_TOKEN_COOKIE_NAME)
@@ -27,7 +28,8 @@ export class ItemsController {
   constructor(private readonly itemsService: ItemsService) {}
 
   @Get()
-  @UseGuards(AuthGuard, AdminGuard)
+  @Roles('admin')
+  @UseGuards(AuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Get all items (admin only)' })
   @ApiResponse({
     status: 200,

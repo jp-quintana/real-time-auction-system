@@ -1,8 +1,13 @@
 export const ERROR_MESSAGES = {
   MISSING_PROPERTIES: 'Required data not provided',
+  INSUFFICIENT_PERMISSIONS:
+    'You do not have the required permissions to perform this action',
   EMAIL_IN_USE: 'Email already in use',
   INVALID_PASSWORD: 'Invalid password',
   USER_NOT_FOUND: 'User not found',
+  USER_NOT_ADMIN: 'User is not administrator',
+  USER_UNAUTHENTICATED: 'User is not authenticated',
+  USER_UN: 'User is not authenticated',
   TOKEN_MISSING: 'Token not provided',
   TOKEN_INVALID: 'Invalid token',
   TOKEN_EXPIRED: 'Token has expired',
