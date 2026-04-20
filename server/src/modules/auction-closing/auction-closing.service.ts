@@ -4,6 +4,7 @@ import {
   AUCTION_STATUS_CLOSED,
   DATABASE_CONNECTION,
   ERROR_MESSAGES,
+  EVENT_AUCTION_CLOSED,
   NOTIFICATIONS_QUEUE,
 } from 'src/common/constants';
 import type { Database } from 'src/common/types';
@@ -92,7 +93,7 @@ export class AuctionClosingService {
     );
 
     await this.bidsCacheService.removeHighestBid(closedAuction.id);
-    this.eventEmitter.emit('auction.closed', {
+    this.eventEmitter.emit(EVENT_AUCTION_CLOSED, {
       auctionId: closedAuction.id,
       winningBid: winner
         ? {

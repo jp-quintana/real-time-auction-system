@@ -7,6 +7,7 @@ import {
 import {
   DATABASE_CONNECTION,
   ERROR_MESSAGES,
+  EVENT_BID_PLACED,
   NOTIFICATIONS_QUEUE,
 } from 'src/common/constants';
 import { CreateBidDto } from './dtos';
@@ -104,7 +105,7 @@ export class BidsService {
       console.error('Failed to update bid cache after commit', err);
     }
 
-    this.eventEmitter.emit('bid.placed', {
+    this.eventEmitter.emit(EVENT_BID_PLACED, {
       bid: { ...bid, amount: Number(bid.amount) },
       auctionEndTime,
       previousHighBidderId: previousHighBid?.bidder.id ?? null,

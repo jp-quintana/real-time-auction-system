@@ -8,17 +8,7 @@ import {
 } from '@nestjs/common';
 import { AuctionsQueryDto, CreateAuctionDto } from './dtos';
 import * as auctionsSchema from './schemas';
-import {
-  and,
-  desc,
-  eq,
-  exists,
-  gt,
-  gte,
-  isNull,
-  notExists,
-  sql,
-} from 'drizzle-orm';
+import { and, desc, eq, gt, gte, isNull, notExists, sql } from 'drizzle-orm';
 import {
   AuctionsQueryRelations,
   type Database,

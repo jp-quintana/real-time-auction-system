@@ -8,6 +8,7 @@ import {
   AUCTION_CLOSING_QUEUE,
   AUCTION_STATUS_CANCELLED,
   AUCTION_STATUS_CLOSED,
+  EVENT_AUCTION_CLOSED,
 } from 'src/common/constants';
 import { setupTestDb, teardownTestDb, type TestDb } from './setup-test-db';
 import {
@@ -66,14 +67,16 @@ describe('Auction Closing (e2e)', () => {
       const listener = (e: AuctionClosedPayload) => {
         if (e.auctionId !== auctionId) return;
         clearTimeout(timer);
-        eventEmitter.off('auction.closed', listener);
+        eventEmitter.off(EVENT_AUCTION_CLOSED, listener);
         resolve(e);
       };
       const timer = setTimeout(() => {
-        eventEmitter.off('auction.closed', listener);
-        reject(new Error(`Timed out waiting for auction.closed for ${auctionId}`));
+        eventEmitter.off(EVENT_AUCTION_CLOSED, listener);
+        reject(
+          new Error(`Timed out waiting for auction.closed for ${auctionId}`),
+        );
       }, timeoutMs);
-      eventEmitter.on('auction.closed', listener);
+      eventEmitter.on(EVENT_AUCTION_CLOSED, listener);
     });
   }
 
@@ -85,10 +88,10 @@ describe('Auction Closing (e2e)', () => {
     const listener = (e: AuctionClosedPayload) => {
       if (e.auctionId === auctionId) events.push(e);
     };
-    eventEmitter.on('auction.closed', listener);
+    eventEmitter.on(EVENT_AUCTION_CLOSED, listener);
     return {
       events,
-      stop: () => eventEmitter.off('auction.closed', listener),
+      stop: () => eventEmitter.off(EVENT_AUCTION_CLOSED, listener),
     };
   }
 
@@ -108,7 +111,9 @@ describe('Auction Closing (e2e)', () => {
       .overrideProvider(MAILER_OPTIONS)
       .useValue({ transport: { jsonTransport: true } })
       .overrideProvider(MailerService)
-      .useValue({ sendMail: jest.fn().mockResolvedValue({ messageId: 'stub' }) })
+      .useValue({
+        sendMail: jest.fn().mockResolvedValue({ messageId: 'stub' }),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();

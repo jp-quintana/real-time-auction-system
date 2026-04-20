@@ -11,6 +11,8 @@ import {
   CACHE_CONNECTION,
   PREFIX,
   ACCESS_TOKEN_COOKIE_NAME,
+  EVENT_BID_PLACED,
+  EVENT_AUCTION_CLOSED,
 } from 'src/common/constants';
 import { setupTestDb, teardownTestDb, type TestDb } from './setup-test-db';
 import {
@@ -19,7 +21,10 @@ import {
   type TestCache,
 } from './setup-test-cache';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import type { BidPlacedEvent, AuctionClosedEvent } from 'src/modules/auctions/types';
+import type {
+  BidPlacedEvent,
+  AuctionClosedEvent,
+} from 'src/modules/auctions/types';
 import { parse as parseCookie } from 'cookie';
 import { AuctionsGateway } from 'src/modules/auctions/auctions.gateway';
 import { AuthService } from 'src/modules/auth/auth.service';
@@ -70,7 +75,10 @@ describe('AuctionsGateway (e2e)', () => {
 
   function waitForConnect(socket: ClientSocket): Promise<void> {
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('Connection timeout')), 5000);
+      const timeout = setTimeout(
+        () => reject(new Error('Connection timeout')),
+        5000,
+      );
       socket.on('connect', () => {
         clearTimeout(timeout);
         resolve();
@@ -82,9 +90,16 @@ describe('AuctionsGateway (e2e)', () => {
     });
   }
 
-  function waitForEvent<T = unknown>(socket: ClientSocket, event: string, timeoutMs = 5000): Promise<T> {
+  function waitForEvent<T = unknown>(
+    socket: ClientSocket,
+    event: string,
+    timeoutMs = 5000,
+  ): Promise<T> {
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error(`Timeout waiting for "${event}"`)), timeoutMs);
+      const timeout = setTimeout(
+        () => reject(new Error(`Timeout waiting for "${event}"`)),
+        timeoutMs,
+      );
       socket.once(event, (data: T) => {
         clearTimeout(timeout);
         resolve(data);
@@ -108,7 +123,9 @@ describe('AuctionsGateway (e2e)', () => {
       .overrideProvider(MAILER_OPTIONS)
       .useValue({ transport: { jsonTransport: true } })
       .overrideProvider(MailerService)
-      .useValue({ sendMail: jest.fn().mockResolvedValue({ messageId: 'stub' }) })
+      .useValue({
+        sendMail: jest.fn().mockResolvedValue({ messageId: 'stub' }),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -188,11 +205,14 @@ describe('AuctionsGateway (e2e)', () => {
     sockets.length = 0;
   });
 
-  afterAll(async () => {
-    await app.close();
-    await teardownTestCache(testCache);
-    await teardownTestDb(testDb);
-  }, 11 * 60 * 1000);
+  afterAll(
+    async () => {
+      await app.close();
+      await teardownTestCache(testCache);
+      await teardownTestDb(testDb);
+    },
+    11 * 60 * 1000,
+  );
 
   describe('handleConnection', () => {
     it('should authenticate a client with valid cookies', async () => {
@@ -244,7 +264,10 @@ describe('AuctionsGateway (e2e)', () => {
       const socket = connectSocket(bidderCookies);
       await waitForConnect(socket);
 
-      const exceptionPromise = waitForEvent<{ message: string }>(socket, 'exception');
+      const exceptionPromise = waitForEvent<{ message: string }>(
+        socket,
+        'exception',
+      );
 
       socket.emit('auction:subscribe', {
         auctionId: '00000000-0000-0000-0000-000000000000',
@@ -280,7 +303,7 @@ describe('AuctionsGateway (e2e)', () => {
         previousHighBidderId: null,
       };
 
-      eventEmitter.emit('bid.placed', event);
+      eventEmitter.emit(EVENT_BID_PLACED, event);
 
       const received = await bidPlacedPromise;
       expect(received).toMatchObject({
@@ -301,7 +324,9 @@ describe('AuctionsGateway (e2e)', () => {
 
       // Only subscribe the first socket
       await new Promise<void>((resolve) => {
-        subscribedSocket.emit('auction:subscribe', { auctionId }, () => resolve());
+        subscribedSocket.emit('auction:subscribe', { auctionId }, () =>
+          resolve(),
+        );
       });
 
       const subscribedPromise = waitForEvent(subscribedSocket, 'bid:placed');
@@ -325,7 +350,7 @@ describe('AuctionsGateway (e2e)', () => {
         previousHighBidderId: null,
       };
 
-      eventEmitter.emit('bid.placed', event);
+      eventEmitter.emit(EVENT_BID_PLACED, event);
 
       await subscribedPromise;
 
@@ -356,7 +381,7 @@ describe('AuctionsGateway (e2e)', () => {
         previousHighBidderId: prevBidderId,
       };
 
-      eventEmitter.emit('bid.placed', event);
+      eventEmitter.emit(EVENT_BID_PLACED, event);
 
       const received = await outbidPromise;
       expect(received).toMatchObject({
@@ -390,7 +415,7 @@ describe('AuctionsGateway (e2e)', () => {
         previousHighBidderId: sameBidderId,
       };
 
-      eventEmitter.emit('bid.placed', event);
+      eventEmitter.emit(EVENT_BID_PLACED, event);
 
       await new Promise((r) => setTimeout(r, 500));
       expect(outbidReceived).toBe(false);
@@ -416,7 +441,7 @@ describe('AuctionsGateway (e2e)', () => {
         },
       };
 
-      eventEmitter.emit('auction.closed', event);
+      eventEmitter.emit(EVENT_AUCTION_CLOSED, event);
 
       const received = await closedPromise;
       expect(received).toEqual({
@@ -446,7 +471,7 @@ describe('AuctionsGateway (e2e)', () => {
         },
       };
 
-      eventEmitter.emit('auction.closed', event);
+      eventEmitter.emit(EVENT_AUCTION_CLOSED, event);
 
       await new Promise((r) => setTimeout(r, 500));
       expect(closedReceived).toBe(false);
@@ -465,7 +490,7 @@ describe('AuctionsGateway (e2e)', () => {
 
       // Verify we receive events
       const firstBidPromise = waitForEvent(socket, 'bid:placed');
-      eventEmitter.emit('bid.placed', {
+      eventEmitter.emit(EVENT_BID_PLACED, {
         bid: {
           id: 'bid-before-unsub',
           auctionId,
@@ -491,7 +516,7 @@ describe('AuctionsGateway (e2e)', () => {
         receivedAfterUnsub = true;
       });
 
-      eventEmitter.emit('bid.placed', {
+      eventEmitter.emit(EVENT_BID_PLACED, {
         bid: {
           id: 'bid-after-unsub',
           auctionId,

@@ -1,0 +1,27 @@
+export const AUCTION_SORT_CREATED_AT_ASC = 'created-at-asc';
+export const AUCTION_SORT_CREATED_AT_DESC = 'created-at-desc';
+export const AUCTION_SORT_ENDING_SOONEST = 'ending-soonest';
+
+export const AUCTION_SORT_VALUES = [
+  AUCTION_SORT_CREATED_AT_ASC,
+  AUCTION_SORT_CREATED_AT_DESC,
+  AUCTION_SORT_ENDING_SOONEST,
+] as const;
+
+export const AUCTION_STATUS_ACTIVE = 'active';
+export const AUCTION_STATUS_CLOSED = 'closed';
+export const AUCTION_STATUS_CANCELLED = 'cancelled';
+
+export const AUCTION_STATUS_VALUES = [
+  AUCTION_STATUS_ACTIVE,
+  AUCTION_STATUS_CLOSED,
+  AUCTION_STATUS_CANCELLED,
+] as const;
+
+export const AUCTION_CANCELLED_ADMIN_FREEZE = 'admin_freeze';
+export const AUCTION_CANCELLED_POLICY_VIOLATION = 'policy_violation';
+
+export const AUCTION_CANCELLED_REASONS = [
+  AUCTION_CANCELLED_ADMIN_FREEZE,
+  AUCTION_CANCELLED_POLICY_VIOLATION,
+] as const;
