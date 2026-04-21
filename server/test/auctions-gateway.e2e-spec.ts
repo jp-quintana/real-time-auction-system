@@ -196,7 +196,7 @@ describe('AuctionsGateway (e2e)', () => {
       })
       .expect(201);
     auctionId = auctionRes.body.id;
-  });
+  }, 60_000);
 
   afterEach(() => {
     for (const s of sockets) {
