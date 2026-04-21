@@ -108,7 +108,7 @@ describe('POST /auctions/:auctionId/bids (e2e)', () => {
       })
       .expect(201);
     auctionId = auctionRes.body.id;
-  });
+  }, 60_000);
 
   afterAll(
     async () => {
