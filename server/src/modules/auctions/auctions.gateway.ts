@@ -12,6 +12,7 @@ import { AuthService } from '../auth/auth.service';
 import type { Socket } from 'src/common/types';
 import { OnEvent } from '@nestjs/event-emitter';
 import type {
+  AuctionCancelledEvent,
   AuctionClosedEvent,
   AuctionResumedEvent,
   AuctionSuspendedEvent,
@@ -20,6 +21,7 @@ import type {
 import { AuctionsService } from './auctions.service';
 import { AuctionSubscribeDto, AuctionUnsubscribeDto } from './dtos';
 import {
+  EVENT_AUCTION_CANCELLED,
   EVENT_AUCTION_CLOSED,
   EVENT_AUCTION_RESUMED,
   EVENT_AUCTION_SUSPENDED,
@@ -110,6 +112,14 @@ export class AuctionsGateway implements OnGatewayConnection {
   handleAuctionResumed(event: AuctionResumedEvent) {
     this.server.to(`auction:${event.auctionId}`).emit('auction:resumed', {
       auctionId: event.auctionId,
+    });
+  }
+
+  @OnEvent(EVENT_AUCTION_CANCELLED)
+  handleAuctionCancelled(event: AuctionCancelledEvent) {
+    this.server.to(`auction:${event.auctionId}`).emit('auction:cancelled', {
+      auctionId: event.auctionId,
+      reason: event.reason,
     });
   }
 }

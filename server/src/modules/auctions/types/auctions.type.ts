@@ -1,5 +1,6 @@
 import {
-  AUCTION_UPDATE_STATUS_REASONS,
+  AUCTION_CANCEL_REASONS,
+  AUCTION_FREEZE_REASONS,
   AUCTION_SORT_VALUES,
 } from '../constants';
 import { AUCTION_STATUS_VALUES } from '../constants';
@@ -21,10 +22,13 @@ export interface AuctionClosedEvent {
 
 export interface AuctionCancelledEvent {
   auctionId: string;
-  reason: AuctionUpdateStatusReason;
+  reason: AuctionCancelReason;
 }
 
-export interface AuctionSuspendedEvent extends AuctionCancelledEvent {}
+export interface AuctionSuspendedEvent {
+  auctionId: string;
+  reason: AuctionFreezeReason;
+}
 
 export interface AuctionResumedEvent {
   auctionId: string;
@@ -34,5 +38,6 @@ export type AuctionSort = (typeof AUCTION_SORT_VALUES)[number];
 
 export type AuctionStatus = (typeof AUCTION_STATUS_VALUES)[number];
 
-export type AuctionUpdateStatusReason =
-  (typeof AUCTION_UPDATE_STATUS_REASONS)[number];
+export type AuctionFreezeReason = (typeof AUCTION_FREEZE_REASONS)[number];
+
+export type AuctionCancelReason = (typeof AUCTION_CANCEL_REASONS)[number];

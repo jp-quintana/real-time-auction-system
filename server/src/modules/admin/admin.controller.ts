@@ -3,6 +3,7 @@ import { Roles } from 'src/common/decorators';
 import { AuthGuard, RolesGuard } from 'src/common/guards';
 import { FreezeAuctionDto } from './dtos/freeze-auction.dto';
 import { AdminService } from './admin.service';
+import { CancelAuctionDto } from './dtos';
 
 @Roles('admin')
 @UseGuards(AuthGuard, RolesGuard)
@@ -22,5 +23,13 @@ export class AdminController {
   @Patch('auctions/:id/unfreeze')
   async unfreezeAuction(@Param('id') id: string) {
     return this.adminService.unfreezeAuction(id);
+  }
+
+  @Patch('auctions/:id/cancel')
+  async cancelAuction(
+    @Param('id') id: string,
+    @Body() cancelAuctionDto: CancelAuctionDto,
+  ) {
+    return this.adminService.cancelAuction(id, cancelAuctionDto);
   }
 }
