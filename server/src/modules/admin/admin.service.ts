@@ -14,6 +14,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { BidsCacheService } from '../bids-cache/bids-cache.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { FreezeAuctionDto } from './dtos/freeze-auction.dto';
 
 @Injectable()
 export class AdminService {
@@ -26,8 +27,10 @@ export class AdminService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async freezeAuction(auctionId: string) {
-    const cancelledTransaction = await this.db.transaction(async (tx) => {
+  async freezeAuction(auctionId: string, freezeAuctionDto: FreezeAuctionDto) {
+    const { cancelReason } = freezeAuctionDto;
+
+    const cancelledAuction = await this.db.transaction(async (tx) => {
       const [auction] = await tx
         .select()
         .from(auctionsSchema.auctions)
@@ -44,7 +47,7 @@ export class AdminService {
       if (!auction)
         throw new NotFoundException(ERROR_MESSAGES.AUCTION_NOT_FOUND);
 
-      const [cancelledTransaction] = await tx
+      const [cancelledAuction] = await tx
         .update(auctionsSchema.auctions)
         .set({
           status: AUCTION_STATUS_CANCELLED,
@@ -52,7 +55,7 @@ export class AdminService {
         .where(eq(auctionsSchema.auctions.id, auctionId))
         .returning();
 
-      return cancelledTransaction;
+      return cancelledAuction;
     });
 
     const existingJob = await this.auctionClosingQueue.getJob(auctionId);
@@ -60,9 +63,11 @@ export class AdminService {
 
     await this.bidsCacheService.removeHighestBid(auctionId);
 
-    this.eventEmitter.emit('auction:cancelled', {
-      auctionId: cancelledTransaction.id,
-      reason: 'admin-freeze',
+    this.eventEmitter.emit(EVENT_AUCTION_CANCELLED, {
+      auctionId: cancelledAuction.id,
+      reason: cancelReason ?? 'admin-freeze',
     });
+
+    return cancelledAuction;
   }
 }

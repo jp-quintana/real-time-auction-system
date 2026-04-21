@@ -1,17 +1,21 @@
-import { Controller, Param, Patch, UseGuards } from '@nestjs/common';
-import { CurrentUser, Roles } from 'src/common/decorators';
+import { Body, Controller, Param, Patch, UseGuards } from '@nestjs/common';
+import { Roles } from 'src/common/decorators';
 import { AuthGuard, RolesGuard } from 'src/common/guards';
-import type { AccessTokenPayload } from 'src/common/types';
+import { FreezeAuctionDto } from './dtos/freeze-auction.dto';
+import { AdminService } from './admin.service';
 
 @Roles('admin')
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('admin')
 export class AdminController {
-  controller() {}
+  constructor(private readonly adminService: AdminService) {}
 
+  // TODO: add admin_actions audit log table to store cancel reason
   @Patch('auctions/:id/freeze')
-  freezeAuction(
-    @CurrentUser() user: AccessTokenPayload,
+  async freezeAuction(
     @Param('id') id: string,
-  ) {}
+    @Body() freezeAuctionDto: FreezeAuctionDto,
+  ) {
+    return this.adminService.freezeAuction(id, freezeAuctionDto);
+  }
 }

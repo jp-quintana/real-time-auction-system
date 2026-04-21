@@ -15,7 +15,9 @@ export interface AuctionClosedEvent {
   };
 }
 
+export type AuctionCancelledReason = (typeof AUCTION_CANCELLED_REASONS)[number];
+
 export interface AuctionCancelledEvent {
   auctionId: string;
-  reason: (typeof AUCTION_CANCELLED_REASONS)[number];
+  reason: AuctionCancelledReason;
 }
