@@ -5,10 +5,10 @@ import {
   Injectable,
 } from '@nestjs/common';
 import {
-  DATABASE_CONNECTION,
+  DATABASE_CONNECTION_TOKEN,
   ERROR_MESSAGES,
   EVENT_BID_PLACED,
-  NOTIFICATIONS_QUEUE,
+  NOTIFICATIONS_QUEUE_TOKEN,
 } from 'src/common/constants';
 import { CreateBidDto } from './dtos';
 import { AuctionsService } from '../auctions/auctions.service';
@@ -24,12 +24,12 @@ import { BidsCacheService } from '../bids-cache/bids-cache.service';
 @Injectable()
 export class BidsService {
   constructor(
-    @Inject(DATABASE_CONNECTION)
+    @Inject(DATABASE_CONNECTION_TOKEN)
     private readonly db: Database,
     private readonly bidsCacheService: BidsCacheService,
     private readonly auctionsService: AuctionsService,
     private eventEmitter: EventEmitter2,
-    @InjectQueue(NOTIFICATIONS_QUEUE)
+    @InjectQueue(NOTIFICATIONS_QUEUE_TOKEN)
     private readonly notificationsQueue: Queue,
   ) {}
 

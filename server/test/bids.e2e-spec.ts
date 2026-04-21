@@ -6,8 +6,8 @@ import { AppModule } from './../src/app.module';
 import cookieParser from 'cookie-parser';
 import { MailerService, MAILER_OPTIONS } from '@nestjs-modules/mailer';
 import {
-  DATABASE_CONNECTION,
-  CACHE_CONNECTION,
+  DATABASE_CONNECTION_TOKEN,
+  CACHE_CONNECTION_TOKEN,
   PREFIX,
 } from 'src/common/constants';
 import { setupTestDb, teardownTestDb, type TestDb } from './setup-test-db';
@@ -43,14 +43,16 @@ describe('POST /auctions/:auctionId/bids (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(DATABASE_CONNECTION)
+      .overrideProvider(DATABASE_CONNECTION_TOKEN)
       .useValue(testDb.db)
-      .overrideProvider(CACHE_CONNECTION)
+      .overrideProvider(CACHE_CONNECTION_TOKEN)
       .useValue(testCache.client)
       .overrideProvider(MAILER_OPTIONS)
       .useValue({ transport: { jsonTransport: true } })
       .overrideProvider(MailerService)
-      .useValue({ sendMail: jest.fn().mockResolvedValue({ messageId: 'stub' }) })
+      .useValue({
+        sendMail: jest.fn().mockResolvedValue({ messageId: 'stub' }),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();

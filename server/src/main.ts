@@ -3,13 +3,13 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import {
-  ACCESS_TOKEN_COOKIE_NAME,
-  PREFIX,
-  REFRESH_TOKEN_COOKIE_NAME,
-} from './common/constants';
+import { PREFIX } from './common/constants';
 import { RedisIoAdapter } from './adapters';
 import { ConfigService } from '@nestjs/config';
+import {
+  ACCESS_TOKEN_COOKIE_NAME,
+  REFRESH_TOKEN_COOKIE_NAME,
+} from './modules/auth/constants';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

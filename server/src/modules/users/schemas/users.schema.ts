@@ -1,12 +1,12 @@
 import { relations } from 'drizzle-orm';
 import { pgEnum } from 'drizzle-orm/pg-core';
 import { pgTable, uuid, text } from 'drizzle-orm/pg-core';
-import { USER_ROLES } from 'src/common/constants';
 import { timestamps } from 'src/common/schemas';
 import { sessions } from 'src/modules/auth/schemas';
 import { bids } from 'src/modules/bids/schemas';
 import { items } from 'src/modules/items/schemas';
 import { auctions } from 'src/modules/auctions/schemas';
+import { USER_ROLES } from '../constants';
 
 export const roleEnum = pgEnum('role', USER_ROLES);
 

@@ -6,8 +6,8 @@ import { AppModule } from './../src/app.module';
 import cookieParser from 'cookie-parser';
 import { MailerService, MAILER_OPTIONS } from '@nestjs-modules/mailer';
 import {
-  DATABASE_CONNECTION,
-  CACHE_CONNECTION,
+  DATABASE_CONNECTION_TOKEN,
+  CACHE_CONNECTION_TOKEN,
   PREFIX,
   ACCESS_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
@@ -35,14 +35,16 @@ describe('Auth (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(DATABASE_CONNECTION)
+      .overrideProvider(DATABASE_CONNECTION_TOKEN)
       .useValue(testDb.db)
-      .overrideProvider(CACHE_CONNECTION)
+      .overrideProvider(CACHE_CONNECTION_TOKEN)
       .useValue(testCache.client)
       .overrideProvider(MAILER_OPTIONS)
       .useValue({ transport: { jsonTransport: true } })
       .overrideProvider(MailerService)
-      .useValue({ sendMail: jest.fn().mockResolvedValue({ messageId: 'stub' }) })
+      .useValue({
+        sendMail: jest.fn().mockResolvedValue({ messageId: 'stub' }),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -58,13 +60,19 @@ describe('Auth (e2e)', () => {
     await app.init();
   }, 60_000);
 
-  afterAll(async () => {
-    await app.close();
-    await teardownTestCache(testCache);
-    await teardownTestDb(testDb);
-  }, 11 * 60 * 1000);
+  afterAll(
+    async () => {
+      await app.close();
+      await teardownTestCache(testCache);
+      await teardownTestDb(testDb);
+    },
+    11 * 60 * 1000,
+  );
 
-  function extractCookieValue(cookies: string[], name: string): string | undefined {
+  function extractCookieValue(
+    cookies: string[],
+    name: string,
+  ): string | undefined {
     for (const c of cookies) {
       const match = c.match(new RegExp(`${name}=([^;]+)`));
       if (match) return match[1];
@@ -86,8 +94,12 @@ describe('Auth (e2e)', () => {
         .expect(201);
 
       const cookies = res.headers['set-cookie'] as unknown as string[];
-      expect(extractCookieValue(cookies, ACCESS_TOKEN_COOKIE_NAME)).toBeDefined();
-      expect(extractCookieValue(cookies, REFRESH_TOKEN_COOKIE_NAME)).toBeDefined();
+      expect(
+        extractCookieValue(cookies, ACCESS_TOKEN_COOKIE_NAME),
+      ).toBeDefined();
+      expect(
+        extractCookieValue(cookies, REFRESH_TOKEN_COOKIE_NAME),
+      ).toBeDefined();
       expect(res.body).toEqual({ message: 'Success!' });
     });
 
@@ -165,8 +177,12 @@ describe('Auth (e2e)', () => {
         .expect(201);
 
       const cookies = res.headers['set-cookie'] as unknown as string[];
-      expect(extractCookieValue(cookies, ACCESS_TOKEN_COOKIE_NAME)).toBeDefined();
-      expect(extractCookieValue(cookies, REFRESH_TOKEN_COOKIE_NAME)).toBeDefined();
+      expect(
+        extractCookieValue(cookies, ACCESS_TOKEN_COOKIE_NAME),
+      ).toBeDefined();
+      expect(
+        extractCookieValue(cookies, REFRESH_TOKEN_COOKIE_NAME),
+      ).toBeDefined();
       expect(res.body).toEqual({ message: 'Success!' });
     });
 
@@ -217,8 +233,12 @@ describe('Auth (e2e)', () => {
         .expect(201);
 
       const newCookies = res.headers['set-cookie'] as unknown as string[];
-      expect(extractCookieValue(newCookies, ACCESS_TOKEN_COOKIE_NAME)).toBeDefined();
-      expect(extractCookieValue(newCookies, REFRESH_TOKEN_COOKIE_NAME)).toBeDefined();
+      expect(
+        extractCookieValue(newCookies, ACCESS_TOKEN_COOKIE_NAME),
+      ).toBeDefined();
+      expect(
+        extractCookieValue(newCookies, REFRESH_TOKEN_COOKIE_NAME),
+      ).toBeDefined();
       expect(res.body).toEqual({ message: 'Success!' });
     });
 
@@ -248,8 +268,12 @@ describe('Auth (e2e)', () => {
         .send({ email, password, confirmPassword: password })
         .expect(201);
 
-      const registerCookies = registerRes.headers['set-cookie'] as unknown as string[];
-      expect(extractCookieValue(registerCookies, ACCESS_TOKEN_COOKIE_NAME)).toBeDefined();
+      const registerCookies = registerRes.headers[
+        'set-cookie'
+      ] as unknown as string[];
+      expect(
+        extractCookieValue(registerCookies, ACCESS_TOKEN_COOKIE_NAME),
+      ).toBeDefined();
 
       // 2. Login
       const loginRes = await request(app.getHttpServer())
@@ -257,7 +281,9 @@ describe('Auth (e2e)', () => {
         .send({ email, password })
         .expect(201);
 
-      const loginCookies = loginRes.headers['set-cookie'] as unknown as string[];
+      const loginCookies = loginRes.headers[
+        'set-cookie'
+      ] as unknown as string[];
 
       // 3. Refresh
       const refreshRes = await request(app.getHttpServer())
@@ -265,15 +291,23 @@ describe('Auth (e2e)', () => {
         .set('Cookie', loginCookies)
         .expect(201);
 
-      const refreshCookies = refreshRes.headers['set-cookie'] as unknown as string[];
-      const newAccessToken = extractCookieValue(refreshCookies, ACCESS_TOKEN_COOKIE_NAME);
+      const refreshCookies = refreshRes.headers[
+        'set-cookie'
+      ] as unknown as string[];
+      const newAccessToken = extractCookieValue(
+        refreshCookies,
+        ACCESS_TOKEN_COOKIE_NAME,
+      );
       expect(newAccessToken).toBeDefined();
 
       // 4. Access a protected route with refreshed tokens
       await request(app.getHttpServer())
         .post(`/${PREFIX}/items`)
         .set('Cookie', refreshCookies)
-        .send({ title: 'Auth flow test item', description: 'Testing auth lifecycle' })
+        .send({
+          title: 'Auth flow test item',
+          description: 'Testing auth lifecycle',
+        })
         .expect(201);
     });
   });

@@ -1,10 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import * as auctionsSchema from '../auctions/schemas';
 import {
-  AUCTION_CLOSING_QUEUE,
-  AUCTION_STATUS_ACTIVE,
-  AUCTION_STATUS_CANCELLED,
-  DATABASE_CONNECTION,
+  AUCTION_CLOSING_QUEUE_TOKEN,
+  DATABASE_CONNECTION_TOKEN,
   ERROR_MESSAGES,
   EVENT_AUCTION_CANCELLED,
 } from 'src/common/constants';
@@ -15,13 +13,17 @@ import { Queue } from 'bullmq';
 import { BidsCacheService } from '../bids-cache/bids-cache.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { FreezeAuctionDto } from './dtos/freeze-auction.dto';
+import {
+  AUCTION_STATUS_ACTIVE,
+  AUCTION_STATUS_CANCELLED,
+} from '../auctions/constants';
 
 @Injectable()
 export class AdminService {
   constructor(
-    @Inject(DATABASE_CONNECTION)
+    @Inject(DATABASE_CONNECTION_TOKEN)
     private readonly db: Database,
-    @InjectQueue(AUCTION_CLOSING_QUEUE)
+    @InjectQueue(AUCTION_CLOSING_QUEUE_TOKEN)
     private readonly auctionClosingQueue: Queue,
     private readonly bidsCacheService: BidsCacheService,
     private readonly eventEmitter: EventEmitter2,

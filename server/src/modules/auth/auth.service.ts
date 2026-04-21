@@ -6,13 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from '../users/dtos';
-import {
-  AccessTokenPayload,
-  AuthSession,
-  type Database,
-  JwtPayload,
-  RefreshTokenPayload,
-} from 'src/common/types';
+import { type Database } from 'src/common/types';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
@@ -21,12 +15,21 @@ import * as sessionsSchema from './schemas';
 import { LoginUserDto } from './dtos';
 import { eq } from 'drizzle-orm';
 import { parseTimeToMs } from 'src/common/utils';
-import { DATABASE_CONNECTION, ERROR_MESSAGES } from 'src/common/constants';
+import {
+  DATABASE_CONNECTION_TOKEN,
+  ERROR_MESSAGES,
+} from 'src/common/constants';
+import {
+  AccessTokenPayload,
+  AuthSession,
+  JwtPayload,
+  RefreshTokenPayload,
+} from './types';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject(DATABASE_CONNECTION)
+    @Inject(DATABASE_CONNECTION_TOKEN)
     private readonly db: Database,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,

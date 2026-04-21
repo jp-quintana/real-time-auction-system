@@ -2,14 +2,11 @@ import { relations, sql } from 'drizzle-orm';
 import { uniqueIndex } from 'drizzle-orm/pg-core';
 import { numeric } from 'drizzle-orm/pg-core';
 import { pgTable, uuid, timestamp, pgEnum } from 'drizzle-orm/pg-core';
-import {
-  AUCTION_STATUS_ACTIVE,
-  AUCTION_STATUS_VALUES,
-} from 'src/common/constants';
 import { timestamps } from 'src/common/schemas';
 import { bids } from 'src/modules/bids/schemas';
 import { items } from 'src/modules/items/schemas';
 import { users } from 'src/modules/users/schemas';
+import { AUCTION_STATUS_ACTIVE, AUCTION_STATUS_VALUES } from '../constants';
 
 export const statusEnum = pgEnum('status', AUCTION_STATUS_VALUES);
 

@@ -15,12 +15,8 @@ import {
   Transaction,
 } from 'src/common/types';
 import {
-  AUCTION_CLOSING_QUEUE,
-  AUCTION_SORT_CREATED_AT_ASC,
-  AUCTION_SORT_CREATED_AT_DESC,
-  AUCTION_SORT_ENDING_SOONEST,
-  AUCTION_STATUS_ACTIVE,
-  DATABASE_CONNECTION,
+  AUCTION_CLOSING_QUEUE_TOKEN,
+  DATABASE_CONNECTION_TOKEN,
   DEFAULT_PAGE_SIZE,
   ERROR_MESSAGES,
 } from 'src/common/constants';
@@ -30,14 +26,20 @@ import * as bidsSchema from '../bids/schemas';
 import * as itemsSchema from '../items/schemas';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import {
+  AUCTION_SORT_CREATED_AT_ASC,
+  AUCTION_SORT_CREATED_AT_DESC,
+  AUCTION_SORT_ENDING_SOONEST,
+  AUCTION_STATUS_ACTIVE,
+} from './constants';
 
 @Injectable()
 export class AuctionsService {
   constructor(
-    @Inject(DATABASE_CONNECTION)
+    @Inject(DATABASE_CONNECTION_TOKEN)
     private readonly db: Database,
     private readonly itemsService: ItemsService,
-    @InjectQueue(AUCTION_CLOSING_QUEUE)
+    @InjectQueue(AUCTION_CLOSING_QUEUE_TOKEN)
     private readonly auctionClosingQueue: Queue,
   ) {}
 

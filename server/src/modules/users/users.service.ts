@@ -2,13 +2,16 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import * as usersSchema from './schemas';
 import { CreateUserDto } from './dtos';
 import { eq } from 'drizzle-orm';
-import { DATABASE_CONNECTION, ERROR_MESSAGES } from 'src/common/constants';
+import {
+  DATABASE_CONNECTION_TOKEN,
+  ERROR_MESSAGES,
+} from 'src/common/constants';
 import { Transaction, type Database } from 'src/common/types';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @Inject(DATABASE_CONNECTION)
+    @Inject(DATABASE_CONNECTION_TOKEN)
     private readonly db: Database,
   ) {}
 

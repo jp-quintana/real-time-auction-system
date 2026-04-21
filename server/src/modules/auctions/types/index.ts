@@ -1,1 +1,1 @@
-export * from './auction-events.type';
+export * from './auctions.type';

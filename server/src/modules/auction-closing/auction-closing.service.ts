@@ -1,11 +1,9 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  AUCTION_STATUS_ACTIVE,
-  AUCTION_STATUS_CLOSED,
-  DATABASE_CONNECTION,
+  DATABASE_CONNECTION_TOKEN,
   ERROR_MESSAGES,
   EVENT_AUCTION_CLOSED,
-  NOTIFICATIONS_QUEUE,
+  NOTIFICATIONS_QUEUE_TOKEN,
 } from 'src/common/constants';
 import type { Database } from 'src/common/types';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
@@ -17,15 +15,19 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { BidsCacheService } from '../bids-cache/bids-cache.service';
+import {
+  AUCTION_STATUS_ACTIVE,
+  AUCTION_STATUS_CLOSED,
+} from '../auctions/constants';
 
 @Injectable()
 export class AuctionClosingService {
   constructor(
-    @Inject(DATABASE_CONNECTION)
+    @Inject(DATABASE_CONNECTION_TOKEN)
     private readonly db: Database,
     private readonly bidsCacheService: BidsCacheService,
     private eventEmitter: EventEmitter2,
-    @InjectQueue(NOTIFICATIONS_QUEUE)
+    @InjectQueue(NOTIFICATIONS_QUEUE_TOKEN)
     private readonly notificationsQueue: Queue,
   ) {}
 

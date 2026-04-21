@@ -1,5 +1,5 @@
 import { DefaultEventsMap, Socket as IoSocket } from 'socket.io';
-import { AccessTokenPayload } from './auth-session.type';
+import { AccessTokenPayload } from 'src/modules/auth/types';
 
 export interface SocketData {
   user?: AccessTokenPayload;

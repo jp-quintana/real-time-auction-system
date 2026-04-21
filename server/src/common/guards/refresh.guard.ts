@@ -7,7 +7,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { ERROR_MESSAGES, REFRESH_TOKEN_COOKIE_NAME } from '../constants';
+import { ERROR_MESSAGES } from '../constants';
+import { REFRESH_TOKEN_COOKIE_NAME } from 'src/modules/auth/constants';
 
 @Injectable()
 export class RefreshGuard implements CanActivate {

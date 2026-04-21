@@ -3,6 +3,13 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
 import { Job } from 'bullmq';
 import * as nodemailer from 'nodemailer';
+import {
+  NotificationQueueJobPayload,
+  NotificationQueueJobName,
+  OutbidJob,
+  AuctionWonJob,
+  AuctionClosedJob,
+} from './types';
 
 @Processor('notifications')
 export class NotificationsProcessor extends WorkerHost {
@@ -21,7 +28,7 @@ export class NotificationsProcessor extends WorkerHost {
   }
 
   async process(
-    job: Job<any, void, 'outbid' | 'auction-won' | 'auction-closed'>,
+    job: Job<NotificationQueueJobPayload, void, NotificationQueueJobName>,
   ): Promise<any> {
     switch (job.name) {
       case 'outbid': {
@@ -30,7 +37,7 @@ export class NotificationsProcessor extends WorkerHost {
           previousHighBidderEmail,
           previousHighBidAmount,
           newHighBidAmount,
-        } = job.data;
+        } = (job as OutbidJob).data;
 
         // TODO: add url to auction page
         const info = await this.mailerService.sendMail({
@@ -47,7 +54,9 @@ export class NotificationsProcessor extends WorkerHost {
       }
 
       case 'auction-won': {
-        const { auctionId, winnerEmail, winnerBidAmount } = job.data;
+        const { auctionId, winnerEmail, winnerBidAmount } = (
+          job as AuctionWonJob
+        ).data;
 
         const info = await this.mailerService.sendMail({
           to: winnerEmail,
@@ -63,7 +72,9 @@ export class NotificationsProcessor extends WorkerHost {
       }
 
       case 'auction-closed': {
-        const { itemId, sellerEmail, winnerId, winnerBidAmount } = job.data;
+        const { itemId, sellerEmail, winnerId, winnerBidAmount } = (
+          job as AuctionClosedJob
+        ).data;
 
         const info = await this.mailerService.sendMail({
           to: sellerEmail,

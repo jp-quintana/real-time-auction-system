@@ -9,9 +9,9 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { Queue, QueueEvents } from 'bullmq';
 import { eq } from 'drizzle-orm';
 import {
-  DATABASE_CONNECTION,
-  CACHE_CONNECTION,
-  NOTIFICATIONS_QUEUE,
+  DATABASE_CONNECTION_TOKEN,
+  CACHE_CONNECTION_TOKEN,
+  NOTIFICATIONS_QUEUE_TOKEN,
   PREFIX,
 } from 'src/common/constants';
 import { setupTestDb, teardownTestDb, type TestDb } from './setup-test-db';
@@ -85,9 +85,9 @@ describe('Notifications (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(DATABASE_CONNECTION)
+      .overrideProvider(DATABASE_CONNECTION_TOKEN)
       .useValue(testDb.db)
-      .overrideProvider(CACHE_CONNECTION)
+      .overrideProvider(CACHE_CONNECTION_TOKEN)
       .useValue(testCache.client)
       .overrideProvider(MAILER_OPTIONS)
       .useValue({ transport: { jsonTransport: true } })
@@ -108,9 +108,9 @@ describe('Notifications (e2e)', () => {
     await app.init();
 
     notificationsQueue = moduleFixture.get<Queue>(
-      getQueueToken(NOTIFICATIONS_QUEUE),
+      getQueueToken(NOTIFICATIONS_QUEUE_TOKEN),
     );
-    queueEvents = new QueueEvents(NOTIFICATIONS_QUEUE, {
+    queueEvents = new QueueEvents(NOTIFICATIONS_QUEUE_TOKEN, {
       connection: { url: testCache.connectionUri },
     });
     await queueEvents.waitUntilReady();
@@ -156,7 +156,8 @@ describe('Notifications (e2e)', () => {
       .expect(201);
 
     await waitFor(
-      async () => (await notificationsQueue.getCompletedCount()) > completedBefore,
+      async () =>
+        (await notificationsQueue.getCompletedCount()) > completedBefore,
       10_000,
     );
 

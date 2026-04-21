@@ -1,12 +1,12 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
-import { NOTIFICATIONS_QUEUE } from 'src/common/constants';
+import { NOTIFICATIONS_QUEUE_TOKEN } from 'src/common/constants';
 import { NotificationsProcessor } from './notifications.processor';
 
 @Module({
   imports: [
     BullModule.registerQueue({
-      name: NOTIFICATIONS_QUEUE,
+      name: NOTIFICATIONS_QUEUE_TOKEN,
       defaultJobOptions: {
         attempts: 3,
         backoff: { type: 'exponential', delay: 5000 },

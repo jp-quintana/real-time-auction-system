@@ -1,6 +1,6 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
-import { AUCTION_CLOSING_QUEUE } from 'src/common/constants';
+import { AUCTION_CLOSING_QUEUE_TOKEN } from 'src/common/constants';
 import { AuctionClosingProcessor } from './auction-closing.processor';
 import { AuctionClosingService } from './auction-closing.service';
 import { DatabaseModule } from '../database/database.module';
@@ -11,7 +11,7 @@ import { BidsCacheModule } from '../bids-cache/bids-cache.module';
   imports: [
     DatabaseModule,
     BullModule.registerQueue({
-      name: AUCTION_CLOSING_QUEUE,
+      name: AUCTION_CLOSING_QUEUE_TOKEN,
     }),
     NotificationsModule,
     BidsCacheModule,

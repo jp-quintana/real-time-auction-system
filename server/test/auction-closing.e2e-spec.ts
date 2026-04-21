@@ -3,9 +3,9 @@ import { INestApplication } from '@nestjs/common';
 import { AppModule } from './../src/app.module';
 import { MailerService, MAILER_OPTIONS } from '@nestjs-modules/mailer';
 import {
-  DATABASE_CONNECTION,
-  CACHE_CONNECTION,
-  AUCTION_CLOSING_QUEUE,
+  DATABASE_CONNECTION_TOKEN,
+  CACHE_CONNECTION_TOKEN,
+  AUCTION_CLOSING_QUEUE_TOKEN,
   AUCTION_STATUS_CANCELLED,
   AUCTION_STATUS_CLOSED,
   EVENT_AUCTION_CLOSED,
@@ -104,9 +104,9 @@ describe('Auction Closing (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(DATABASE_CONNECTION)
+      .overrideProvider(DATABASE_CONNECTION_TOKEN)
       .useValue(testDb.db)
-      .overrideProvider(CACHE_CONNECTION)
+      .overrideProvider(CACHE_CONNECTION_TOKEN)
       .useValue(testCache.client)
       .overrideProvider(MAILER_OPTIONS)
       .useValue({ transport: { jsonTransport: true } })
@@ -120,7 +120,9 @@ describe('Auction Closing (e2e)', () => {
     await app.init();
 
     eventEmitter = moduleFixture.get(EventEmitter2);
-    queue = moduleFixture.get<Queue>(getQueueToken(AUCTION_CLOSING_QUEUE));
+    queue = moduleFixture.get<Queue>(
+      getQueueToken(AUCTION_CLOSING_QUEUE_TOKEN),
+    );
     auctionsService = moduleFixture.get(AuctionsService);
     bidsService = moduleFixture.get(BidsService);
     closingProcessor = moduleFixture.get(AuctionClosingProcessor);
