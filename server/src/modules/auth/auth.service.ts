@@ -16,7 +16,7 @@ import { LoginUserDto } from './dtos';
 import { eq } from 'drizzle-orm';
 import { parseTimeToMs } from 'src/common/utils';
 import {
-  DATABASE_CONNECTION_TOKEN,
+  TOKEN_DATABASE_CONNECTION,
   ERROR_MESSAGES,
 } from 'src/common/constants';
 import {
@@ -29,7 +29,7 @@ import {
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject(DATABASE_CONNECTION_TOKEN)
+    @Inject(TOKEN_DATABASE_CONNECTION)
     private readonly db: Database,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,

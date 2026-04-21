@@ -3,7 +3,7 @@ import * as usersSchema from './schemas';
 import { CreateUserDto } from './dtos';
 import { eq } from 'drizzle-orm';
 import {
-  DATABASE_CONNECTION_TOKEN,
+  TOKEN_DATABASE_CONNECTION,
   ERROR_MESSAGES,
 } from 'src/common/constants';
 import { Transaction, type Database } from 'src/common/types';
@@ -11,7 +11,7 @@ import { Transaction, type Database } from 'src/common/types';
 @Injectable()
 export class UsersService {
   constructor(
-    @Inject(DATABASE_CONNECTION_TOKEN)
+    @Inject(TOKEN_DATABASE_CONNECTION)
     private readonly db: Database,
   ) {}
 

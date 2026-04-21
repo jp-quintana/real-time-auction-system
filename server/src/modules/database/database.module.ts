@@ -7,12 +7,12 @@ import * as sessionsSchema from '../auth/schemas';
 import * as itemsSchema from '../items/schemas';
 import * as auctionsSchema from '../auctions/schemas';
 import * as bidsSchema from '../bids/schemas';
-import { DATABASE_CONNECTION_TOKEN } from 'src/common/constants';
+import { TOKEN_DATABASE_CONNECTION } from 'src/common/constants';
 
 @Module({
   providers: [
     {
-      provide: DATABASE_CONNECTION_TOKEN,
+      provide: TOKEN_DATABASE_CONNECTION,
       useFactory: (config: ConfigService) => {
         const pool = new Pool({
           connectionString: config.getOrThrow('DATABASE_URL'),
@@ -31,6 +31,6 @@ import { DATABASE_CONNECTION_TOKEN } from 'src/common/constants';
       inject: [ConfigService],
     },
   ],
-  exports: [DATABASE_CONNECTION_TOKEN],
+  exports: [TOKEN_DATABASE_CONNECTION],
 })
 export class DatabaseModule {}

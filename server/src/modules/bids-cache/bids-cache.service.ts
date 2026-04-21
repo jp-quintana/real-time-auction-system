@@ -2,7 +2,7 @@ import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import {
   AUCTION_HIGHEST_BID_KEY_SUFFIX,
   AUCTION_KEY_PREFIX,
-  CACHE_CONNECTION_TOKEN,
+  TOKEN_CACHE_CONNECTION,
 } from 'src/common/constants';
 import Redis from 'ioredis';
 
@@ -15,7 +15,7 @@ declare module 'ioredis' {
 @Injectable()
 export class BidsCacheService implements OnModuleInit {
   constructor(
-    @Inject(CACHE_CONNECTION_TOKEN)
+    @Inject(TOKEN_CACHE_CONNECTION)
     private readonly cache: Redis,
   ) {}
 

@@ -10,12 +10,17 @@ import { AdminService } from './admin.service';
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
-  // TODO: add admin_actions audit log table to store cancel reason
+  // TODO: add admin_actions audit log table to store suspend reason
   @Patch('auctions/:id/freeze')
   async freezeAuction(
     @Param('id') id: string,
     @Body() freezeAuctionDto: FreezeAuctionDto,
   ) {
     return this.adminService.freezeAuction(id, freezeAuctionDto);
+  }
+
+  @Patch('auctions/:id/unfreeze')
+  async unfreezeAuction(@Param('id') id: string) {
+    return this.adminService.unfreezeAuction(id);
   }
 }

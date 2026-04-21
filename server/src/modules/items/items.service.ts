@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  DATABASE_CONNECTION_TOKEN,
+  TOKEN_DATABASE_CONNECTION,
   DEFAULT_PAGE_SIZE,
   ERROR_MESSAGES,
 } from 'src/common/constants';
@@ -16,7 +16,7 @@ import {
 @Injectable()
 export class ItemsService {
   constructor(
-    @Inject(DATABASE_CONNECTION_TOKEN)
+    @Inject(TOKEN_DATABASE_CONNECTION)
     private readonly db: Database,
   ) {}
 

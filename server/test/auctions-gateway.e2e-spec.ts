@@ -7,8 +7,8 @@ import { AppModule } from './../src/app.module';
 import cookieParser from 'cookie-parser';
 import { MailerService, MAILER_OPTIONS } from '@nestjs-modules/mailer';
 import {
-  DATABASE_CONNECTION_TOKEN,
-  CACHE_CONNECTION_TOKEN,
+  TOKEN_DATABASE_CONNECTION,
+  TOKEN_CACHE_CONNECTION,
   PREFIX,
   EVENT_BID_PLACED,
   EVENT_AUCTION_CLOSED,
@@ -116,9 +116,9 @@ describe('AuctionsGateway (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(DATABASE_CONNECTION_TOKEN)
+      .overrideProvider(TOKEN_DATABASE_CONNECTION)
       .useValue(testDb.db)
-      .overrideProvider(CACHE_CONNECTION_TOKEN)
+      .overrideProvider(TOKEN_CACHE_CONNECTION)
       .useValue(testCache.client)
       .overrideProvider(MAILER_OPTIONS)
       .useValue({ transport: { jsonTransport: true } })

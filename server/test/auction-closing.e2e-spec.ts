@@ -3,9 +3,9 @@ import { INestApplication } from '@nestjs/common';
 import { AppModule } from './../src/app.module';
 import { MailerService, MAILER_OPTIONS } from '@nestjs-modules/mailer';
 import {
-  DATABASE_CONNECTION_TOKEN,
-  CACHE_CONNECTION_TOKEN,
-  AUCTION_CLOSING_QUEUE_TOKEN,
+  TOKEN_DATABASE_CONNECTION,
+  TOKEN_CACHE_CONNECTION,
+  TOKEN_AUCTION_CLOSING_QUEUE,
   EVENT_AUCTION_CLOSED,
 } from 'src/common/constants';
 import {
@@ -106,9 +106,9 @@ describe('Auction Closing (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(DATABASE_CONNECTION_TOKEN)
+      .overrideProvider(TOKEN_DATABASE_CONNECTION)
       .useValue(testDb.db)
-      .overrideProvider(CACHE_CONNECTION_TOKEN)
+      .overrideProvider(TOKEN_CACHE_CONNECTION)
       .useValue(testCache.client)
       .overrideProvider(MAILER_OPTIONS)
       .useValue({ transport: { jsonTransport: true } })
@@ -123,7 +123,7 @@ describe('Auction Closing (e2e)', () => {
 
     eventEmitter = moduleFixture.get(EventEmitter2);
     queue = moduleFixture.get<Queue>(
-      getQueueToken(AUCTION_CLOSING_QUEUE_TOKEN),
+      getQueueToken(TOKEN_AUCTION_CLOSING_QUEUE),
     );
     auctionsService = moduleFixture.get(AuctionsService);
     bidsService = moduleFixture.get(BidsService);

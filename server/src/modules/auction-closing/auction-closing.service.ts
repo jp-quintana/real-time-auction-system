@@ -1,9 +1,9 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  DATABASE_CONNECTION_TOKEN,
+  TOKEN_DATABASE_CONNECTION,
   ERROR_MESSAGES,
   EVENT_AUCTION_CLOSED,
-  NOTIFICATIONS_QUEUE_TOKEN,
+  TOKEN_NOTIFICATIONS_QUEUE,
 } from 'src/common/constants';
 import type { Database } from 'src/common/types';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
@@ -23,11 +23,11 @@ import {
 @Injectable()
 export class AuctionClosingService {
   constructor(
-    @Inject(DATABASE_CONNECTION_TOKEN)
+    @Inject(TOKEN_DATABASE_CONNECTION)
     private readonly db: Database,
     private readonly bidsCacheService: BidsCacheService,
     private eventEmitter: EventEmitter2,
-    @InjectQueue(NOTIFICATIONS_QUEUE_TOKEN)
+    @InjectQueue(TOKEN_NOTIFICATIONS_QUEUE)
     private readonly notificationsQueue: Queue,
   ) {}
 

@@ -15,8 +15,8 @@ import {
   Transaction,
 } from 'src/common/types';
 import {
-  AUCTION_CLOSING_QUEUE_TOKEN,
-  DATABASE_CONNECTION_TOKEN,
+  TOKEN_AUCTION_CLOSING_QUEUE,
+  TOKEN_DATABASE_CONNECTION,
   DEFAULT_PAGE_SIZE,
   ERROR_MESSAGES,
 } from 'src/common/constants';
@@ -36,10 +36,10 @@ import {
 @Injectable()
 export class AuctionsService {
   constructor(
-    @Inject(DATABASE_CONNECTION_TOKEN)
+    @Inject(TOKEN_DATABASE_CONNECTION)
     private readonly db: Database,
     private readonly itemsService: ItemsService,
-    @InjectQueue(AUCTION_CLOSING_QUEUE_TOKEN)
+    @InjectQueue(TOKEN_AUCTION_CLOSING_QUEUE)
     private readonly auctionClosingQueue: Queue,
   ) {}
 

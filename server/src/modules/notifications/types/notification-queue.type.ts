@@ -11,6 +11,7 @@ export interface OutbidJobData {
   previousHighBidAmount: number;
   newHighBidAmount: number;
 }
+
 export interface AuctionWonData {
   auctionId: string;
   winnerEmail: string;
