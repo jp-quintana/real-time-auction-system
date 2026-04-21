@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { AuthTokenPayload } from 'src/common/types';
+import { AuthTokenPayload } from 'src/modules/auth/types';
 
 declare global {
   namespace Express {

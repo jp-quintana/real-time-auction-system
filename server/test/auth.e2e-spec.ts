@@ -9,9 +9,11 @@ import {
   DATABASE_CONNECTION_TOKEN,
   CACHE_CONNECTION_TOKEN,
   PREFIX,
+} from 'src/common/constants';
+import {
   ACCESS_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
-} from 'src/common/constants';
+} from 'src/modules/auth/constants';
 import { setupTestDb, teardownTestDb, type TestDb } from './setup-test-db';
 import {
   setupTestCache,

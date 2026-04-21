@@ -10,10 +10,10 @@ import {
   DATABASE_CONNECTION_TOKEN,
   CACHE_CONNECTION_TOKEN,
   PREFIX,
-  ACCESS_TOKEN_COOKIE_NAME,
   EVENT_BID_PLACED,
   EVENT_AUCTION_CLOSED,
 } from 'src/common/constants';
+import { ACCESS_TOKEN_COOKIE_NAME } from 'src/modules/auth/constants';
 import { setupTestDb, teardownTestDb, type TestDb } from './setup-test-db';
 import {
   setupTestCache,

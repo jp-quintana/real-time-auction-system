@@ -6,10 +6,12 @@ import {
   DATABASE_CONNECTION_TOKEN,
   CACHE_CONNECTION_TOKEN,
   AUCTION_CLOSING_QUEUE_TOKEN,
-  AUCTION_STATUS_CANCELLED,
-  AUCTION_STATUS_CLOSED,
   EVENT_AUCTION_CLOSED,
 } from 'src/common/constants';
+import {
+  AUCTION_STATUS_CANCELLED,
+  AUCTION_STATUS_CLOSED,
+} from 'src/modules/auctions/constants';
 import { setupTestDb, teardownTestDb, type TestDb } from './setup-test-db';
 import {
   setupTestCache,

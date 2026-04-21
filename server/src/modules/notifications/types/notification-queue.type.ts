@@ -20,8 +20,8 @@ export interface AuctionWonData {
 export interface AuctionClosedData {
   itemId: string;
   sellerEmail: string;
-  winnerId?: string;
-  winnerBidAmount?: number;
+  winnerId: string | null;
+  winnerBidAmount: number | null;
 }
 
 export type NotificationQueueJobPayload =
