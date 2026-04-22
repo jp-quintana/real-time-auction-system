@@ -7,6 +7,7 @@ import {
   TOKEN_CACHE_CONNECTION,
   TOKEN_AUCTION_CLOSING_QUEUE,
   EVENT_AUCTION_CLOSED,
+  JOB_AUCTION_CLOSE,
 } from 'src/common/constants';
 import {
   AUCTION_STATUS_CANCELLED,
@@ -193,9 +194,9 @@ describe('Auction Closing (e2e)', () => {
     const collected = collectClosedEvents(auction.id);
 
     const job = {
-      name: 'close',
+      name: JOB_AUCTION_CLOSE,
       data: { auctionId: auction.id },
-    } as unknown as Job<{ auctionId: string }, void, 'close'>;
+    } as unknown as Job<{ auctionId: string }, void, typeof JOB_AUCTION_CLOSE>;
 
     await closingProcessor.process(job);
     await closingProcessor.process(job);

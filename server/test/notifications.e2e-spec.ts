@@ -13,6 +13,7 @@ import {
   TOKEN_CACHE_CONNECTION,
   TOKEN_NOTIFICATIONS_QUEUE,
   PREFIX,
+  JOB_NOTIFICATION_OUTBID,
 } from 'src/common/constants';
 import { setupTestDb, teardownTestDb, type TestDb } from './setup-test-db';
 import {
@@ -173,7 +174,7 @@ describe('Notifications (e2e)', () => {
       .mockResolvedValueOnce({ messageId: 'ok-on-retry' });
 
     const job = await notificationsQueue.add(
-      'outbid',
+      JOB_NOTIFICATION_OUTBID,
       {
         auctionId: 'retry-auction',
         previousHighBidderEmail: 'retry-prev@test.com',
