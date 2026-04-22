@@ -7,6 +7,7 @@ import {
   AuctionClosingQueueJobPayload,
   CloseJob,
 } from './types';
+import { JOB_AUCTION_CLOSE } from 'src/common/constants';
 
 @Processor('auction-closing')
 export class AuctionClosingProcessor extends WorkerHost {
@@ -17,7 +18,7 @@ export class AuctionClosingProcessor extends WorkerHost {
     job: Job<AuctionClosingQueueJobPayload, void, AuctionClosingQueueJobName>,
   ): Promise<any> {
     switch (job.name) {
-      case 'close': {
+      case JOB_AUCTION_CLOSE: {
         const { auctionId } = (job as CloseJob).data;
         try {
           await this.auctionClosingService.close(auctionId);

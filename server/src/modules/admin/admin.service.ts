@@ -7,6 +7,7 @@ import {
   EVENT_AUCTION_SUSPENDED,
   EVENT_AUCTION_RESUMED,
   EVENT_AUCTION_CANCELLED,
+  JOB_AUCTION_CLOSE,
 } from 'src/common/constants';
 import type { Database } from 'src/common/types';
 import { and, eq, isNull, or, sql } from 'drizzle-orm';
@@ -109,7 +110,7 @@ export class AdminService {
     });
 
     await this.auctionClosingQueue.add(
-      'close',
+      JOB_AUCTION_CLOSE,
       { auctionId: resumedAuction.id },
       {
         delay: resumedAuction.endTime.getTime() - Date.now(),

@@ -9,6 +9,7 @@ import {
   ERROR_MESSAGES,
   EVENT_BID_PLACED,
   TOKEN_NOTIFICATIONS_QUEUE,
+  JOB_NOTIFICATION_OUTBID,
 } from 'src/common/constants';
 import { CreateBidDto } from './dtos';
 import { AuctionsService } from '../auctions/auctions.service';
@@ -112,7 +113,7 @@ export class BidsService {
     });
 
     if (previousHighBid) {
-      await this.notificationsQueue.add('outbid', {
+      await this.notificationsQueue.add(JOB_NOTIFICATION_OUTBID, {
         auctionId,
         previousHighBidderEmail: previousHighBid.bidder.email,
         previousHighBidAmount: Number(previousHighBid.amount),

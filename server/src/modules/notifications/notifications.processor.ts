@@ -10,6 +10,11 @@ import {
   AuctionWonJob,
   AuctionClosedJob,
 } from './types';
+import {
+  JOB_NOTIFICATION_AUCTION_CLOSED,
+  JOB_NOTIFICATION_AUCTION_WON,
+  JOB_NOTIFICATION_OUTBID,
+} from 'src/common/constants';
 
 @Processor('notifications')
 export class NotificationsProcessor extends WorkerHost {
@@ -31,7 +36,7 @@ export class NotificationsProcessor extends WorkerHost {
     job: Job<NotificationQueueJobPayload, void, NotificationQueueJobName>,
   ): Promise<any> {
     switch (job.name) {
-      case 'outbid': {
+      case JOB_NOTIFICATION_OUTBID: {
         const {
           auctionId,
           previousHighBidderEmail,
@@ -53,7 +58,7 @@ export class NotificationsProcessor extends WorkerHost {
         return;
       }
 
-      case 'auction-won': {
+      case JOB_NOTIFICATION_AUCTION_WON: {
         const { auctionId, winnerEmail, winnerBidAmount } = (
           job as AuctionWonJob
         ).data;
@@ -71,7 +76,7 @@ export class NotificationsProcessor extends WorkerHost {
         return;
       }
 
-      case 'auction-closed': {
+      case JOB_NOTIFICATION_AUCTION_CLOSED: {
         const { itemId, sellerEmail, winnerId, winnerBidAmount } = (
           job as AuctionClosedJob
         ).data;

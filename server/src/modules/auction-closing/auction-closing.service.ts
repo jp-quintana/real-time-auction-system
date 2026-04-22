@@ -4,6 +4,8 @@ import {
   ERROR_MESSAGES,
   EVENT_AUCTION_CLOSED,
   TOKEN_NOTIFICATIONS_QUEUE,
+  JOB_NOTIFICATION_AUCTION_WON,
+  JOB_NOTIFICATION_AUCTION_CLOSED,
 } from 'src/common/constants';
 import type { Database } from 'src/common/types';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
@@ -106,14 +108,14 @@ export class AuctionClosingService {
     });
 
     if (winner) {
-      await this.notificationsQueue.add('auction-won', {
+      await this.notificationsQueue.add(JOB_NOTIFICATION_AUCTION_WON, {
         auctionId,
         winnerEmail: winner.bidder.email,
         winnerBidAmount: Number(winner.bid.amount),
       });
     }
 
-    await this.notificationsQueue.add('auction-closed', {
+    await this.notificationsQueue.add(JOB_NOTIFICATION_AUCTION_CLOSED, {
       itemId: closedAuction.itemId,
       sellerEmail: seller.email,
       winnerId: winner?.bidder.id ?? null,

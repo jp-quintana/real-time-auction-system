@@ -19,6 +19,7 @@ import {
   TOKEN_DATABASE_CONNECTION,
   DEFAULT_PAGE_SIZE,
   ERROR_MESSAGES,
+  JOB_AUCTION_CLOSE,
 } from 'src/common/constants';
 import { ItemsService } from '../items/items.service';
 import { UpdateAuctionDto } from './dtos/update-auction.dto';
@@ -169,7 +170,7 @@ export class AuctionsService {
     });
 
     await this.auctionClosingQueue.add(
-      'close',
+      JOB_AUCTION_CLOSE,
       { auctionId: auction.id },
       { delay: auction.endTime.getTime() - Date.now(), jobId: auction.id },
     );
@@ -242,7 +243,7 @@ export class AuctionsService {
       const existingJob = await this.auctionClosingQueue.getJob(auctionId);
       if (existingJob) await existingJob.remove();
       await this.auctionClosingQueue.add(
-        'close',
+        JOB_AUCTION_CLOSE,
         { auctionId: auction.id },
         { delay: updated.endTime.getTime() - Date.now(), jobId: auction.id },
       );
