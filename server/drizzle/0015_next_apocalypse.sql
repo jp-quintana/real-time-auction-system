@@ -1,2 +1,2 @@
-DROP INDEX "auctions_one_active_per_item";--> statement-breakpoint
-CREATE UNIQUE INDEX "auctions_one_live_per_item" ON "auctions" USING btree ("item_id") WHERE "auctions"."status" NOT IN ('closed', 'cancelled') AND "auctions"."deleted_at" IS NULL;
+DROP INDEX IF EXISTS "auctions_one_active_per_item";--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "auctions_one_live_per_item" ON "auctions" USING btree ("item_id") WHERE "auctions"."status" NOT IN ('closed', 'cancelled') AND "auctions"."deleted_at" IS NULL;
