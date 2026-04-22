@@ -1,5 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import * as auctionsSchema from '../auctions/schemas';
+import * as usersSchema from '../users/schemas';
+import * as sessionsSchema from '../auth/schemas';
 import {
   TOKEN_AUCTION_CLOSING_QUEUE,
   TOKEN_DATABASE_CONNECTION,
@@ -10,7 +12,7 @@ import {
   JOB_AUCTION_CLOSE,
 } from 'src/common/constants';
 import type { Database } from 'src/common/types';
-import { and, eq, isNull, or, sql } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { BidsCacheService } from '../bids-cache/bids-cache.service';
@@ -24,6 +26,7 @@ import {
   AUCTION_SUSPENDED_ADMIN_FREEZE,
 } from '../auctions/constants';
 import { CancelAuctionDto } from './dtos';
+import { UsersCacheService } from '../users-cache/users-cache.service';
 
 @Injectable()
 export class AdminService {
@@ -34,6 +37,7 @@ export class AdminService {
     private readonly auctionClosingQueue: Queue,
     private readonly bidsCacheService: BidsCacheService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly usersCacheService: UsersCacheService,
   ) {}
 
   async freezeAuction(auctionId: string, freezeAuctionDto: FreezeAuctionDto) {
@@ -170,5 +174,71 @@ export class AdminService {
     });
 
     return cancelledAuction;
+  }
+
+  async banUser(userId: string) {
+    const bannedUser = await this.db.transaction(async (tx) => {
+      const [user] = await tx
+        .select()
+        .from(usersSchema.users)
+        .where(
+          and(
+            eq(usersSchema.users.id, userId),
+            isNull(usersSchema.users.deletedAt),
+            isNull(usersSchema.users.bannedAt),
+          ),
+        )
+        .for('update');
+
+      if (!user) throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
+
+      const [bannedUser] = await tx
+        .update(usersSchema.users)
+        .set({ bannedAt: new Date() })
+        .where(eq(usersSchema.users.id, userId))
+        .returning();
+
+      await tx
+        .update(sessionsSchema.sessions)
+        .set({ deletedAt: new Date() })
+        .where(eq(sessionsSchema.sessions.userId, userId));
+
+      return bannedUser;
+    });
+
+    try {
+      await this.usersCacheService.setBannedUser(userId);
+    } catch (err) {
+      console.error('Failed to set banned user cache after ban commit', err);
+    }
+
+    return bannedUser;
+  }
+
+  async unbanUser(userId: string) {
+    const [unbannedUser] = await this.db
+      .update(usersSchema.users)
+      .set({
+        bannedAt: null,
+      })
+      .where(
+        and(
+          eq(usersSchema.users.id, userId),
+          isNull(usersSchema.users.deletedAt),
+          isNotNull(usersSchema.users.bannedAt),
+        ),
+      )
+      .returning();
+
+    if (!unbannedUser)
+      throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
+
+    try {
+      await this.usersCacheService.removeBannedUser(userId);
+    } catch (err) {
+      console.error('Failed to remove banned user cache after unban commit', err);
+    }
+
+    return unbannedUser;
   }
 }

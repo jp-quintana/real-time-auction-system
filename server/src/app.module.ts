@@ -14,6 +14,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { MailerModule } from '@nestjs-modules/mailer';
 import { BidsCacheModule } from './modules/bids-cache/bids-cache.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { UsersCacheModule } from './modules/users-cache/users-cache.module';
 import * as nodemailer from 'nodemailer';
 
 @Module({
@@ -68,6 +69,7 @@ import * as nodemailer from 'nodemailer';
     NotificationsModule,
     BidsCacheModule,
     AdminModule,
+    UsersCacheModule,
   ],
   controllers: [],
 })

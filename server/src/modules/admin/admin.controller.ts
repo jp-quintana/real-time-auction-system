@@ -32,4 +32,16 @@ export class AdminController {
   ) {
     return this.adminService.cancelAuction(id, cancelAuctionDto);
   }
+
+  @Patch('users/:id/ban')
+  async banUser(@Param('id') id: string) {
+    await this.adminService.banUser(id);
+    return { message: 'Success!' };
+  }
+
+  @Patch('users/:id/unban')
+  async unBanUser(@Param('id') id: string) {
+    await this.adminService.unbanUser(id);
+    return { message: 'Success!' };
+  }
 }

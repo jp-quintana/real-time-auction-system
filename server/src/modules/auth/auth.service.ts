@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -117,6 +118,8 @@ export class AuthService {
 
     if (!user || user.deletedAt)
       throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
+
+    if (user.bannedAt) throw new ForbiddenException(ERROR_MESSAGES.USER_BANNED);
 
     const isPasswordValid = await bcrypt.compare(
       loginUserDto.password,

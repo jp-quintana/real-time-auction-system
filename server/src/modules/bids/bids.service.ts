@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   TOKEN_DATABASE_CONNECTION,
@@ -52,6 +53,17 @@ export class BidsService {
           auctionId,
           tx,
         );
+
+        const [existingBidder] = await tx
+          .select()
+          .from(usersSchema.users)
+          .where(eq(usersSchema.users.id, bidderId));
+
+        if (!existingBidder)
+          throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
+
+        if (existingBidder.bannedAt !== null)
+          throw new ForbiddenException(ERROR_MESSAGES.USER_BANNED);
 
         if (auction.item.sellerId === bidderId) {
           throw new ForbiddenException(ERROR_MESSAGES.BID_ITEM_OWNER);
