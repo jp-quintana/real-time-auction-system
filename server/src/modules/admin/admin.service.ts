@@ -10,9 +10,10 @@ import {
   EVENT_AUCTION_RESUMED,
   EVENT_AUCTION_CANCELLED,
   JOB_AUCTION_CLOSE,
+  DEFAULT_PAGE_SIZE,
 } from 'src/common/constants';
 import type { Database } from 'src/common/types';
-import { and, eq, isNotNull, isNull, or, sql } from 'drizzle-orm';
+import { and, eq, gte, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { BidsCacheService } from '../bids-cache/bids-cache.service';
@@ -20,12 +21,15 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { FreezeAuctionDto } from './dtos/freeze-auction.dto';
 import {
   AUCTION_CANCELLED_ADMIN_CANCEL,
+  AUCTION_SORT_CREATED_AT_ASC,
+  AUCTION_SORT_CREATED_AT_DESC,
+  AUCTION_SORT_ENDING_SOONEST,
   AUCTION_STATUS_ACTIVE,
   AUCTION_STATUS_CANCELLED,
   AUCTION_STATUS_SUSPENDED,
   AUCTION_SUSPENDED_ADMIN_FREEZE,
 } from '../auctions/constants';
-import { CancelAuctionDto } from './dtos';
+import { AdminAuctionsQueryDto, CancelAuctionDto } from './dtos';
 import { UsersCacheService } from '../users-cache/users-cache.service';
 
 @Injectable()
@@ -236,9 +240,56 @@ export class AdminService {
     try {
       await this.usersCacheService.removeBannedUser(userId);
     } catch (err) {
-      console.error('Failed to remove banned user cache after unban commit', err);
+      console.error(
+        'Failed to remove banned user cache after unban commit',
+        err,
+      );
     }
 
     return unbannedUser;
+  }
+
+  async findAll(adminAuctionsQueryDto: AdminAuctionsQueryDto) {
+    const page = adminAuctionsQueryDto.page || 1;
+    const pageSize = adminAuctionsQueryDto.pageSize || DEFAULT_PAGE_SIZE;
+
+    return await this.db.query.auctions.findMany({
+      where: and(
+        isNull(auctionsSchema.auctions.deletedAt),
+        adminAuctionsQueryDto.status
+          ? eq(auctionsSchema.auctions.status, adminAuctionsQueryDto.status)
+          : undefined,
+        adminAuctionsQueryDto.sort === AUCTION_SORT_ENDING_SOONEST
+          ? gte(auctionsSchema.auctions.endTime, new Date())
+          : undefined,
+      ),
+      orderBy: (auctions, { asc, desc }) => {
+        switch (adminAuctionsQueryDto.sort) {
+          case AUCTION_SORT_CREATED_AT_ASC:
+            return asc(auctions.createdAt);
+          case AUCTION_SORT_CREATED_AT_DESC:
+            return desc(auctions.createdAt);
+          case AUCTION_SORT_ENDING_SOONEST:
+            return asc(auctions.endTime);
+          default:
+            return desc(auctions.createdAt);
+        }
+      },
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+      with: {
+        item: {
+          with: {
+            seller: {
+              columns: { id: true, email: true },
+            },
+          },
+        },
+        bids: {
+          orderBy: (bids, { desc }) => desc(bids.amount),
+          limit: 1,
+        },
+      },
+    });
   }
 }

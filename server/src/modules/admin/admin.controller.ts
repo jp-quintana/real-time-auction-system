@@ -1,9 +1,17 @@
-import { Body, Controller, Param, Patch, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { Roles } from 'src/common/decorators';
 import { AuthGuard, RolesGuard } from 'src/common/guards';
 import { FreezeAuctionDto } from './dtos/freeze-auction.dto';
 import { AdminService } from './admin.service';
-import { CancelAuctionDto } from './dtos';
+import { AdminAuctionsQueryDto, CancelAuctionDto } from './dtos';
 
 @Roles('admin')
 @UseGuards(AuthGuard, RolesGuard)
@@ -43,5 +51,10 @@ export class AdminController {
   async unBanUser(@Param('id') id: string) {
     await this.adminService.unbanUser(id);
     return { message: 'Success!' };
+  }
+
+  @Get('auctions')
+  async findAllAuctions(@Query() adminAuctionsQueryDto: AdminAuctionsQueryDto) {
+    return this.adminService.findAll(adminAuctionsQueryDto);
   }
 }

@@ -72,7 +72,10 @@ export class BidsService {
         const [previousHighBid] = await tx
           .select({
             amount: bidsSchema.bids.amount,
-            bidder: usersSchema.users,
+            bidder: {
+              id: usersSchema.users.id,
+              email: usersSchema.users.email,
+            },
           })
           .from(bidsSchema.bids)
           .where(eq(bidsSchema.bids.auctionId, auctionId))

@@ -16,7 +16,17 @@ export class UsersService {
   ) {}
 
   async findAll() {
-    return this.db.query.users.findMany();
+    return this.db.query.users.findMany({
+      columns: {
+        id: true,
+        email: true,
+        role: true,
+        bannedAt: true,
+        deletedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
   }
 
   async findOneById(id: string, tx?: Transaction) {
