@@ -3,6 +3,18 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
 import { Job } from 'bullmq';
 import * as nodemailer from 'nodemailer';
+import {
+  NotificationQueueJobPayload,
+  NotificationQueueJobName,
+  OutbidJob,
+  AuctionWonJob,
+  AuctionClosedJob,
+} from './types';
+import {
+  JOB_NOTIFICATION_AUCTION_CLOSED,
+  JOB_NOTIFICATION_AUCTION_WON,
+  JOB_NOTIFICATION_OUTBID,
+} from 'src/common/constants';
 
 @Processor('notifications')
 export class NotificationsProcessor extends WorkerHost {
@@ -21,16 +33,16 @@ export class NotificationsProcessor extends WorkerHost {
   }
 
   async process(
-    job: Job<any, void, 'outbid' | 'auction-won' | 'auction-closed'>,
+    job: Job<NotificationQueueJobPayload, void, NotificationQueueJobName>,
   ): Promise<any> {
     switch (job.name) {
-      case 'outbid': {
+      case JOB_NOTIFICATION_OUTBID: {
         const {
           auctionId,
           previousHighBidderEmail,
           previousHighBidAmount,
           newHighBidAmount,
-        } = job.data;
+        } = (job as OutbidJob).data;
 
         // TODO: add url to auction page
         const info = await this.mailerService.sendMail({
@@ -46,8 +58,10 @@ export class NotificationsProcessor extends WorkerHost {
         return;
       }
 
-      case 'auction-won': {
-        const { auctionId, winnerEmail, winnerBidAmount } = job.data;
+      case JOB_NOTIFICATION_AUCTION_WON: {
+        const { auctionId, winnerEmail, winnerBidAmount } = (
+          job as AuctionWonJob
+        ).data;
 
         const info = await this.mailerService.sendMail({
           to: winnerEmail,
@@ -62,8 +76,10 @@ export class NotificationsProcessor extends WorkerHost {
         return;
       }
 
-      case 'auction-closed': {
-        const { itemId, sellerEmail, winnerId, winnerBidAmount } = job.data;
+      case JOB_NOTIFICATION_AUCTION_CLOSED: {
+        const { itemId, sellerEmail, winnerId, winnerBidAmount } = (
+          job as AuctionClosedJob
+        ).data;
 
         const info = await this.mailerService.sendMail({
           to: sellerEmail,

@@ -9,10 +9,11 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { Queue, QueueEvents } from 'bullmq';
 import { eq } from 'drizzle-orm';
 import {
-  DATABASE_CONNECTION,
-  CACHE_CONNECTION,
-  NOTIFICATIONS_QUEUE,
+  TOKEN_DATABASE_CONNECTION,
+  TOKEN_CACHE_CONNECTION,
+  TOKEN_NOTIFICATIONS_QUEUE,
   PREFIX,
+  JOB_NOTIFICATION_OUTBID,
 } from 'src/common/constants';
 import { setupTestDb, teardownTestDb, type TestDb } from './setup-test-db';
 import {
@@ -85,9 +86,9 @@ describe('Notifications (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(DATABASE_CONNECTION)
+      .overrideProvider(TOKEN_DATABASE_CONNECTION)
       .useValue(testDb.db)
-      .overrideProvider(CACHE_CONNECTION)
+      .overrideProvider(TOKEN_CACHE_CONNECTION)
       .useValue(testCache.client)
       .overrideProvider(MAILER_OPTIONS)
       .useValue({ transport: { jsonTransport: true } })
@@ -108,9 +109,9 @@ describe('Notifications (e2e)', () => {
     await app.init();
 
     notificationsQueue = moduleFixture.get<Queue>(
-      getQueueToken(NOTIFICATIONS_QUEUE),
+      getQueueToken(TOKEN_NOTIFICATIONS_QUEUE),
     );
-    queueEvents = new QueueEvents(NOTIFICATIONS_QUEUE, {
+    queueEvents = new QueueEvents(TOKEN_NOTIFICATIONS_QUEUE, {
       connection: { url: testCache.connectionUri },
     });
     await queueEvents.waitUntilReady();
@@ -156,7 +157,8 @@ describe('Notifications (e2e)', () => {
       .expect(201);
 
     await waitFor(
-      async () => (await notificationsQueue.getCompletedCount()) > completedBefore,
+      async () =>
+        (await notificationsQueue.getCompletedCount()) > completedBefore,
       10_000,
     );
 
@@ -172,7 +174,7 @@ describe('Notifications (e2e)', () => {
       .mockResolvedValueOnce({ messageId: 'ok-on-retry' });
 
     const job = await notificationsQueue.add(
-      'outbid',
+      JOB_NOTIFICATION_OUTBID,
       {
         auctionId: 'retry-auction',
         previousHighBidderEmail: 'retry-prev@test.com',

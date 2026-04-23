@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
-import type { AuthTokenPayload } from '../types';
+import { AuthTokenPayload } from 'src/modules/auth/types';
 
 export const CurrentUser = createParamDecorator(
   <K extends keyof AuthTokenPayload>(

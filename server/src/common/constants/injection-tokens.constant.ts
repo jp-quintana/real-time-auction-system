@@ -1,4 +1,4 @@
-export const DATABASE_CONNECTION = 'DATABASE_CONNECTION';
-export const CACHE_CONNECTION = 'CACHE_CONNECTION';
-export const AUCTION_CLOSING_QUEUE = 'auction-closing';
-export const NOTIFICATIONS_QUEUE = 'notifications';
+export const TOKEN_DATABASE_CONNECTION = 'DATABASE_CONNECTION';
+export const TOKEN_CACHE_CONNECTION = 'CACHE_CONNECTION';
+export const TOKEN_AUCTION_CLOSING_QUEUE = 'auction-closing';
+export const TOKEN_NOTIFICATIONS_QUEUE = 'notifications';

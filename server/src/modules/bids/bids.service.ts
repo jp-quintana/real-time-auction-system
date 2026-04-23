@@ -3,11 +3,14 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import {
-  DATABASE_CONNECTION,
+  TOKEN_DATABASE_CONNECTION,
   ERROR_MESSAGES,
-  NOTIFICATIONS_QUEUE,
+  EVENT_BID_PLACED,
+  TOKEN_NOTIFICATIONS_QUEUE,
+  JOB_NOTIFICATION_OUTBID,
 } from 'src/common/constants';
 import { CreateBidDto } from './dtos';
 import { AuctionsService } from '../auctions/auctions.service';
@@ -23,12 +26,12 @@ import { BidsCacheService } from '../bids-cache/bids-cache.service';
 @Injectable()
 export class BidsService {
   constructor(
-    @Inject(DATABASE_CONNECTION)
+    @Inject(TOKEN_DATABASE_CONNECTION)
     private readonly db: Database,
     private readonly bidsCacheService: BidsCacheService,
     private readonly auctionsService: AuctionsService,
     private eventEmitter: EventEmitter2,
-    @InjectQueue(NOTIFICATIONS_QUEUE)
+    @InjectQueue(TOKEN_NOTIFICATIONS_QUEUE)
     private readonly notificationsQueue: Queue,
   ) {}
 
@@ -51,6 +54,17 @@ export class BidsService {
           tx,
         );
 
+        const [existingBidder] = await tx
+          .select()
+          .from(usersSchema.users)
+          .where(eq(usersSchema.users.id, bidderId));
+
+        if (!existingBidder)
+          throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
+
+        if (existingBidder.bannedAt !== null)
+          throw new ForbiddenException(ERROR_MESSAGES.USER_BANNED);
+
         if (auction.item.sellerId === bidderId) {
           throw new ForbiddenException(ERROR_MESSAGES.BID_ITEM_OWNER);
         }
@@ -58,7 +72,10 @@ export class BidsService {
         const [previousHighBid] = await tx
           .select({
             amount: bidsSchema.bids.amount,
-            bidder: usersSchema.users,
+            bidder: {
+              id: usersSchema.users.id,
+              email: usersSchema.users.email,
+            },
           })
           .from(bidsSchema.bids)
           .where(eq(bidsSchema.bids.auctionId, auctionId))
@@ -104,14 +121,14 @@ export class BidsService {
       console.error('Failed to update bid cache after commit', err);
     }
 
-    this.eventEmitter.emit('bid.placed', {
+    this.eventEmitter.emit(EVENT_BID_PLACED, {
       bid: { ...bid, amount: Number(bid.amount) },
       auctionEndTime,
       previousHighBidderId: previousHighBid?.bidder.id ?? null,
     });
 
     if (previousHighBid) {
-      await this.notificationsQueue.add('outbid', {
+      await this.notificationsQueue.add(JOB_NOTIFICATION_OUTBID, {
         auctionId,
         previousHighBidderEmail: previousHighBid.bidder.email,
         previousHighBidAmount: Number(previousHighBid.amount),

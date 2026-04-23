@@ -11,9 +11,22 @@ import { extractTokenFromSocket } from '../auth/utils';
 import { AuthService } from '../auth/auth.service';
 import type { Socket } from 'src/common/types';
 import { OnEvent } from '@nestjs/event-emitter';
-import type { AuctionClosedEvent, BidPlacedEvent } from './types';
+import type {
+  AuctionCancelledEvent,
+  AuctionClosedEvent,
+  AuctionResumedEvent,
+  AuctionSuspendedEvent,
+  BidPlacedEvent,
+} from './types';
 import { AuctionsService } from './auctions.service';
 import { AuctionSubscribeDto, AuctionUnsubscribeDto } from './dtos';
+import {
+  EVENT_AUCTION_CANCELLED,
+  EVENT_AUCTION_CLOSED,
+  EVENT_AUCTION_RESUMED,
+  EVENT_AUCTION_SUSPENDED,
+  EVENT_BID_PLACED,
+} from 'src/common/constants';
 
 @WebSocketGateway({ namespace: 'auctions' })
 export class AuctionsGateway implements OnGatewayConnection {
@@ -58,7 +71,7 @@ export class AuctionsGateway implements OnGatewayConnection {
     return { ok: true };
   }
 
-  @OnEvent('bid.placed')
+  @OnEvent(EVENT_BID_PLACED)
   handleBidPlaced(event: BidPlacedEvent) {
     this.server.to(`auction:${event.bid.auctionId}`).emit('bid:placed', {
       bidId: event.bid.id,
@@ -79,11 +92,34 @@ export class AuctionsGateway implements OnGatewayConnection {
     }
   }
 
-  @OnEvent('auction.closed')
+  @OnEvent(EVENT_AUCTION_CLOSED)
   handleAuctionClosed(event: AuctionClosedEvent) {
     this.server.to(`auction:${event.auctionId}`).emit('auction:closed', {
       auctionId: event.auctionId,
       winningBid: event.winningBid,
+    });
+  }
+
+  @OnEvent(EVENT_AUCTION_SUSPENDED)
+  handleAuctionSuspended(event: AuctionSuspendedEvent) {
+    this.server.to(`auction:${event.auctionId}`).emit('auction:suspended', {
+      auctionId: event.auctionId,
+      reason: event.reason,
+    });
+  }
+
+  @OnEvent(EVENT_AUCTION_RESUMED)
+  handleAuctionResumed(event: AuctionResumedEvent) {
+    this.server.to(`auction:${event.auctionId}`).emit('auction:resumed', {
+      auctionId: event.auctionId,
+    });
+  }
+
+  @OnEvent(EVENT_AUCTION_CANCELLED)
+  handleAuctionCancelled(event: AuctionCancelledEvent) {
+    this.server.to(`auction:${event.auctionId}`).emit('auction:cancelled', {
+      auctionId: event.auctionId,
+      reason: event.reason,
     });
   }
 }

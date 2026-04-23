@@ -21,7 +21,8 @@ import {
   ApiCookieAuth,
   ApiBody,
 } from '@nestjs/swagger';
-import { ACCESS_TOKEN_COOKIE_NAME, ERROR_MESSAGES } from 'src/common/constants';
+import { ERROR_MESSAGES } from 'src/common/constants';
+import { ACCESS_TOKEN_COOKIE_NAME } from '../auth/constants';
 
 @ApiTags('auctions')
 @Controller('auctions')

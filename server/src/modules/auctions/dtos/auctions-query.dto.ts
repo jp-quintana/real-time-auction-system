@@ -1,11 +1,8 @@
 import { IsIn, IsOptional } from 'class-validator';
-import {
-  AUCTION_SORT_VALUES,
-  AUCTION_STATUS_VALUES,
-} from 'src/common/constants';
 import { PaginationQueryDto } from 'src/common/dtos';
-import { type AuctionSort, type AuctionStatus } from 'src/common/types';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { AUCTION_SORT_VALUES, AUCTION_STATUS_VALUES } from '../constants';
+import { type AuctionSort, type AuctionStatus } from '../types';
 
 export class AuctionsQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ enum: AUCTION_STATUS_VALUES })

@@ -8,31 +8,18 @@ import {
 } from '@nestjs/common';
 import { AuctionsQueryDto, CreateAuctionDto } from './dtos';
 import * as auctionsSchema from './schemas';
-import {
-  and,
-  desc,
-  eq,
-  exists,
-  gt,
-  gte,
-  isNull,
-  notExists,
-  sql,
-} from 'drizzle-orm';
+import { and, desc, eq, gt, gte, isNull, notExists, sql } from 'drizzle-orm';
 import {
   AuctionsQueryRelations,
   type Database,
   Transaction,
 } from 'src/common/types';
 import {
-  AUCTION_CLOSING_QUEUE,
-  AUCTION_SORT_CREATED_AT_ASC,
-  AUCTION_SORT_CREATED_AT_DESC,
-  AUCTION_SORT_ENDING_SOONEST,
-  AUCTION_STATUS_ACTIVE,
-  DATABASE_CONNECTION,
+  TOKEN_AUCTION_CLOSING_QUEUE,
+  TOKEN_DATABASE_CONNECTION,
   DEFAULT_PAGE_SIZE,
   ERROR_MESSAGES,
+  JOB_AUCTION_CLOSE,
 } from 'src/common/constants';
 import { ItemsService } from '../items/items.service';
 import { UpdateAuctionDto } from './dtos/update-auction.dto';
@@ -40,14 +27,20 @@ import * as bidsSchema from '../bids/schemas';
 import * as itemsSchema from '../items/schemas';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import {
+  AUCTION_SORT_CREATED_AT_ASC,
+  AUCTION_SORT_CREATED_AT_DESC,
+  AUCTION_SORT_ENDING_SOONEST,
+  AUCTION_STATUS_ACTIVE,
+} from './constants';
 
 @Injectable()
 export class AuctionsService {
   constructor(
-    @Inject(DATABASE_CONNECTION)
+    @Inject(TOKEN_DATABASE_CONNECTION)
     private readonly db: Database,
     private readonly itemsService: ItemsService,
-    @InjectQueue(AUCTION_CLOSING_QUEUE)
+    @InjectQueue(TOKEN_AUCTION_CLOSING_QUEUE)
     private readonly auctionClosingQueue: Queue,
   ) {}
 
@@ -177,7 +170,7 @@ export class AuctionsService {
     });
 
     await this.auctionClosingQueue.add(
-      'close',
+      JOB_AUCTION_CLOSE,
       { auctionId: auction.id },
       { delay: auction.endTime.getTime() - Date.now(), jobId: auction.id },
     );
@@ -250,7 +243,7 @@ export class AuctionsService {
       const existingJob = await this.auctionClosingQueue.getJob(auctionId);
       if (existingJob) await existingJob.remove();
       await this.auctionClosingQueue.add(
-        'close',
+        JOB_AUCTION_CLOSE,
         { auctionId: auction.id },
         { delay: updated.endTime.getTime() - Date.now(), jobId: auction.id },
       );

@@ -1,10 +1,11 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  AUCTION_STATUS_ACTIVE,
-  AUCTION_STATUS_CLOSED,
-  DATABASE_CONNECTION,
+  TOKEN_DATABASE_CONNECTION,
   ERROR_MESSAGES,
-  NOTIFICATIONS_QUEUE,
+  EVENT_AUCTION_CLOSED,
+  TOKEN_NOTIFICATIONS_QUEUE,
+  JOB_NOTIFICATION_AUCTION_WON,
+  JOB_NOTIFICATION_AUCTION_CLOSED,
 } from 'src/common/constants';
 import type { Database } from 'src/common/types';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
@@ -16,15 +17,19 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { BidsCacheService } from '../bids-cache/bids-cache.service';
+import {
+  AUCTION_STATUS_ACTIVE,
+  AUCTION_STATUS_CLOSED,
+} from '../auctions/constants';
 
 @Injectable()
 export class AuctionClosingService {
   constructor(
-    @Inject(DATABASE_CONNECTION)
+    @Inject(TOKEN_DATABASE_CONNECTION)
     private readonly db: Database,
     private readonly bidsCacheService: BidsCacheService,
     private eventEmitter: EventEmitter2,
-    @InjectQueue(NOTIFICATIONS_QUEUE)
+    @InjectQueue(TOKEN_NOTIFICATIONS_QUEUE)
     private readonly notificationsQueue: Queue,
   ) {}
 
@@ -92,7 +97,7 @@ export class AuctionClosingService {
     );
 
     await this.bidsCacheService.removeHighestBid(closedAuction.id);
-    this.eventEmitter.emit('auction.closed', {
+    this.eventEmitter.emit(EVENT_AUCTION_CLOSED, {
       auctionId: closedAuction.id,
       winningBid: winner
         ? {
@@ -103,14 +108,14 @@ export class AuctionClosingService {
     });
 
     if (winner) {
-      await this.notificationsQueue.add('auction-won', {
+      await this.notificationsQueue.add(JOB_NOTIFICATION_AUCTION_WON, {
         auctionId,
         winnerEmail: winner.bidder.email,
         winnerBidAmount: Number(winner.bid.amount),
       });
     }
 
-    await this.notificationsQueue.add('auction-closed', {
+    await this.notificationsQueue.add(JOB_NOTIFICATION_AUCTION_CLOSED, {
       itemId: closedAuction.itemId,
       sellerEmail: seller.email,
       winnerId: winner?.bidder.id ?? null,

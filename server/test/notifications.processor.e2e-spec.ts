@@ -2,6 +2,11 @@ import { NotificationsProcessor } from '../src/modules/notifications/notificatio
 import type { MailerService } from '@nestjs-modules/mailer';
 import type { ConfigService } from '@nestjs/config';
 import type { Job } from 'bullmq';
+import {
+  JOB_NOTIFICATION_AUCTION_CLOSED,
+  JOB_NOTIFICATION_AUCTION_WON,
+  JOB_NOTIFICATION_OUTBID,
+} from 'src/common/constants';
 
 describe('NotificationsProcessor', () => {
   let processor: NotificationsProcessor;
@@ -24,7 +29,7 @@ describe('NotificationsProcessor', () => {
 
   it('sends an outbid email to the previous high bidder with the relevant amounts', async () => {
     await processor.process(
-      makeJob('outbid', {
+      makeJob(JOB_NOTIFICATION_OUTBID, {
         auctionId: 'auc-1',
         previousHighBidderEmail: 'prev@test.com',
         previousHighBidAmount: 100,
@@ -45,7 +50,7 @@ describe('NotificationsProcessor', () => {
 
   it('sends an auction-won email to the winner', async () => {
     await processor.process(
-      makeJob('auction-won', {
+      makeJob(JOB_NOTIFICATION_AUCTION_WON, {
         auctionId: 'auc-2',
         winnerEmail: 'winner@test.com',
         winnerBidAmount: 300,
@@ -64,7 +69,7 @@ describe('NotificationsProcessor', () => {
 
   it('sends an auction-closed email with winner details when there is a winner', async () => {
     await processor.process(
-      makeJob('auction-closed', {
+      makeJob(JOB_NOTIFICATION_AUCTION_CLOSED, {
         itemId: 'item-1',
         sellerEmail: 'seller@test.com',
         winnerId: 'user-99',
@@ -82,7 +87,7 @@ describe('NotificationsProcessor', () => {
 
   it('sends an auction-closed email with a no-bids message when there is no winner', async () => {
     await processor.process(
-      makeJob('auction-closed', {
+      makeJob(JOB_NOTIFICATION_AUCTION_CLOSED, {
         itemId: 'item-2',
         sellerEmail: 'seller2@test.com',
         winnerId: null,

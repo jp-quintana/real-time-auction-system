@@ -9,7 +9,8 @@ import {
   ApiResponse,
   ApiCookieAuth,
 } from '@nestjs/swagger';
-import { ACCESS_TOKEN_COOKIE_NAME, ERROR_MESSAGES } from 'src/common/constants';
+import { ERROR_MESSAGES } from 'src/common/constants';
+import { ACCESS_TOKEN_COOKIE_NAME } from '../auth/constants';
 
 @ApiTags('bids')
 @Controller('auctions/:auctionId/bids')

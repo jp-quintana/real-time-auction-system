@@ -1,6 +1,6 @@
-import { ACCESS_TOKEN_COOKIE_NAME } from 'src/common/constants';
 import { parse } from 'cookie';
 import { Socket } from 'src/common/types';
+import { ACCESS_TOKEN_COOKIE_NAME } from '../constants';
 
 export const extractTokenFromSocket = (
   client: Socket,

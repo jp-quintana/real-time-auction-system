@@ -2,14 +2,15 @@ import { relations, sql } from 'drizzle-orm';
 import { uniqueIndex } from 'drizzle-orm/pg-core';
 import { numeric } from 'drizzle-orm/pg-core';
 import { pgTable, uuid, timestamp, pgEnum } from 'drizzle-orm/pg-core';
-import {
-  AUCTION_STATUS_ACTIVE,
-  AUCTION_STATUS_VALUES,
-} from 'src/common/constants';
 import { timestamps } from 'src/common/schemas';
 import { bids } from 'src/modules/bids/schemas';
 import { items } from 'src/modules/items/schemas';
 import { users } from 'src/modules/users/schemas';
+import {
+  AUCTION_STATUS_CANCELLED,
+  AUCTION_STATUS_CLOSED,
+  AUCTION_STATUS_VALUES,
+} from '../constants';
 
 export const statusEnum = pgEnum('status', AUCTION_STATUS_VALUES);
 
@@ -33,10 +34,10 @@ export const auctions = pgTable(
     ...timestamps,
   },
   (table) => [
-    uniqueIndex('auctions_one_active_per_item')
+    uniqueIndex('auctions_one_live_per_item')
       .on(table.itemId)
       .where(
-        sql`${table.status} = ${sql.raw(`'${AUCTION_STATUS_ACTIVE}'`)} AND ${table.deletedAt} IS NULL`,
+        sql`${table.status} NOT IN ('${sql.raw(AUCTION_STATUS_CLOSED)}', '${sql.raw(AUCTION_STATUS_CANCELLED)}') AND ${table.deletedAt} IS NULL`,
       ),
   ],
 );

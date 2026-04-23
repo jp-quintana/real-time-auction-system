@@ -10,22 +10,22 @@ import { CreateUserDto } from '../users/dtos';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
-import type { AuthSession, RefreshTokenPayload } from 'src/common/types';
 import { LoginUserDto } from './dtos';
 import { RefreshGuard } from 'src/common/guards';
 import { CurrentUser } from 'src/common/decorators';
 import { TokenExpiredError } from '@nestjs/jwt';
-import {
-  ACCESS_TOKEN_COOKIE_NAME,
-  ERROR_MESSAGES,
-  REFRESH_TOKEN_COOKIE_NAME,
-} from 'src/common/constants';
+import { ERROR_MESSAGES } from 'src/common/constants';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiCookieAuth,
 } from '@nestjs/swagger';
+import {
+  ACCESS_TOKEN_COOKIE_NAME,
+  REFRESH_TOKEN_COOKIE_NAME,
+} from './constants';
+import type { AuthSession, RefreshTokenPayload } from './types';
 
 @ApiTags('auth')
 @Controller('auth')

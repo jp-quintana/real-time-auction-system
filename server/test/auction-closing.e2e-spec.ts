@@ -3,12 +3,16 @@ import { INestApplication } from '@nestjs/common';
 import { AppModule } from './../src/app.module';
 import { MailerService, MAILER_OPTIONS } from '@nestjs-modules/mailer';
 import {
-  DATABASE_CONNECTION,
-  CACHE_CONNECTION,
-  AUCTION_CLOSING_QUEUE,
+  TOKEN_DATABASE_CONNECTION,
+  TOKEN_CACHE_CONNECTION,
+  TOKEN_AUCTION_CLOSING_QUEUE,
+  EVENT_AUCTION_CLOSED,
+  JOB_AUCTION_CLOSE,
+} from 'src/common/constants';
+import {
   AUCTION_STATUS_CANCELLED,
   AUCTION_STATUS_CLOSED,
-} from 'src/common/constants';
+} from 'src/modules/auctions/constants';
 import { setupTestDb, teardownTestDb, type TestDb } from './setup-test-db';
 import {
   setupTestCache,
@@ -66,14 +70,16 @@ describe('Auction Closing (e2e)', () => {
       const listener = (e: AuctionClosedPayload) => {
         if (e.auctionId !== auctionId) return;
         clearTimeout(timer);
-        eventEmitter.off('auction.closed', listener);
+        eventEmitter.off(EVENT_AUCTION_CLOSED, listener);
         resolve(e);
       };
       const timer = setTimeout(() => {
-        eventEmitter.off('auction.closed', listener);
-        reject(new Error(`Timed out waiting for auction.closed for ${auctionId}`));
+        eventEmitter.off(EVENT_AUCTION_CLOSED, listener);
+        reject(
+          new Error(`Timed out waiting for auction.closed for ${auctionId}`),
+        );
       }, timeoutMs);
-      eventEmitter.on('auction.closed', listener);
+      eventEmitter.on(EVENT_AUCTION_CLOSED, listener);
     });
   }
 
@@ -85,10 +91,10 @@ describe('Auction Closing (e2e)', () => {
     const listener = (e: AuctionClosedPayload) => {
       if (e.auctionId === auctionId) events.push(e);
     };
-    eventEmitter.on('auction.closed', listener);
+    eventEmitter.on(EVENT_AUCTION_CLOSED, listener);
     return {
       events,
-      stop: () => eventEmitter.off('auction.closed', listener),
+      stop: () => eventEmitter.off(EVENT_AUCTION_CLOSED, listener),
     };
   }
 
@@ -101,21 +107,25 @@ describe('Auction Closing (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(DATABASE_CONNECTION)
+      .overrideProvider(TOKEN_DATABASE_CONNECTION)
       .useValue(testDb.db)
-      .overrideProvider(CACHE_CONNECTION)
+      .overrideProvider(TOKEN_CACHE_CONNECTION)
       .useValue(testCache.client)
       .overrideProvider(MAILER_OPTIONS)
       .useValue({ transport: { jsonTransport: true } })
       .overrideProvider(MailerService)
-      .useValue({ sendMail: jest.fn().mockResolvedValue({ messageId: 'stub' }) })
+      .useValue({
+        sendMail: jest.fn().mockResolvedValue({ messageId: 'stub' }),
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
 
     eventEmitter = moduleFixture.get(EventEmitter2);
-    queue = moduleFixture.get<Queue>(getQueueToken(AUCTION_CLOSING_QUEUE));
+    queue = moduleFixture.get<Queue>(
+      getQueueToken(TOKEN_AUCTION_CLOSING_QUEUE),
+    );
     auctionsService = moduleFixture.get(AuctionsService);
     bidsService = moduleFixture.get(BidsService);
     closingProcessor = moduleFixture.get(AuctionClosingProcessor);
@@ -184,9 +194,9 @@ describe('Auction Closing (e2e)', () => {
     const collected = collectClosedEvents(auction.id);
 
     const job = {
-      name: 'close',
+      name: JOB_AUCTION_CLOSE,
       data: { auctionId: auction.id },
-    } as unknown as Job<{ auctionId: string }, void, 'close'>;
+    } as unknown as Job<{ auctionId: string }, void, typeof JOB_AUCTION_CLOSE>;
 
     await closingProcessor.process(job);
     await closingProcessor.process(job);

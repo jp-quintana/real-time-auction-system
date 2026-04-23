@@ -2,18 +2,31 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import * as usersSchema from './schemas';
 import { CreateUserDto } from './dtos';
 import { eq } from 'drizzle-orm';
-import { DATABASE_CONNECTION, ERROR_MESSAGES } from 'src/common/constants';
+import {
+  TOKEN_DATABASE_CONNECTION,
+  ERROR_MESSAGES,
+} from 'src/common/constants';
 import { Transaction, type Database } from 'src/common/types';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @Inject(DATABASE_CONNECTION)
+    @Inject(TOKEN_DATABASE_CONNECTION)
     private readonly db: Database,
   ) {}
 
   async findAll() {
-    return this.db.query.users.findMany();
+    return this.db.query.users.findMany({
+      columns: {
+        id: true,
+        email: true,
+        role: true,
+        bannedAt: true,
+        deletedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
   }
 
   async findOneById(id: string, tx?: Transaction) {
