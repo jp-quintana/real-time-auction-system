@@ -2,6 +2,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import * as auctionsSchema from '../auctions/schemas';
 import * as usersSchema from '../users/schemas';
 import * as sessionsSchema from '../auth/schemas';
+import * as bidsSchema from '../bids/schemas';
 import {
   TOKEN_AUCTION_CLOSING_QUEUE,
   TOKEN_DATABASE_CONNECTION,
@@ -11,9 +12,10 @@ import {
   EVENT_AUCTION_CANCELLED,
   JOB_AUCTION_CLOSE,
   DEFAULT_PAGE_SIZE,
+  SUSPICIOUS_BID_THRESHOLD,
 } from 'src/common/constants';
 import type { Database } from 'src/common/types';
-import { and, eq, gte, isNotNull, isNull, or, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { BidsCacheService } from '../bids-cache/bids-cache.service';
@@ -29,7 +31,11 @@ import {
   AUCTION_STATUS_SUSPENDED,
   AUCTION_SUSPENDED_ADMIN_FREEZE,
 } from '../auctions/constants';
-import { AdminAuctionsQueryDto, CancelAuctionDto } from './dtos';
+import {
+  AdminAuctionsQueryDto,
+  AdminSuspiciousAuctionsQueryDto,
+  CancelAuctionDto,
+} from './dtos';
 import { UsersCacheService } from '../users-cache/users-cache.service';
 
 @Injectable()
@@ -291,5 +297,45 @@ export class AdminService {
         },
       },
     });
+  }
+
+  // TODO: replace with a per-auction "bids-in-last-minute" counter in Redis (sliding window), incremented on each bid in the futrue
+  async findAllSuspicious(
+    adminSuspiciousAuctionsQueryDto: AdminSuspiciousAuctionsQueryDto,
+  ) {
+    const page = adminSuspiciousAuctionsQueryDto.page || 1;
+    const pageSize =
+      adminSuspiciousAuctionsQueryDto.pageSize || DEFAULT_PAGE_SIZE;
+
+    const recentBids = this.db
+      .select({
+        auctionId: bidsSchema.bids.auctionId,
+        bidCount: sql<number>`count(*)::int`.as('bid_count'),
+      })
+      .from(bidsSchema.bids)
+      .where(sql`${bidsSchema.bids.createdAt} > now() - interval '1 minute'`)
+      .groupBy(bidsSchema.bids.auctionId)
+      .having(sql`count(*) > ${SUSPICIOUS_BID_THRESHOLD}`)
+      .as('recent_bids');
+
+    return this.db
+      .select({
+        auction: auctionsSchema.auctions,
+        bidCount: recentBids.bidCount,
+      })
+      .from(auctionsSchema.auctions)
+      .innerJoin(
+        recentBids,
+        eq(recentBids.auctionId, auctionsSchema.auctions.id),
+      )
+      .where(
+        and(
+          isNull(auctionsSchema.auctions.deletedAt),
+          eq(auctionsSchema.auctions.status, AUCTION_STATUS_ACTIVE),
+        ),
+      )
+      .orderBy(desc(recentBids.bidCount))
+      .limit(pageSize)
+      .offset((page - 1) * pageSize);
   }
 }

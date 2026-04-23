@@ -11,7 +11,11 @@ import { Roles } from 'src/common/decorators';
 import { AuthGuard, RolesGuard } from 'src/common/guards';
 import { FreezeAuctionDto } from './dtos/freeze-auction.dto';
 import { AdminService } from './admin.service';
-import { AdminAuctionsQueryDto, CancelAuctionDto } from './dtos';
+import {
+  AdminAuctionsQueryDto,
+  AdminSuspiciousAuctionsQueryDto,
+  CancelAuctionDto,
+} from './dtos';
 
 @Roles('admin')
 @UseGuards(AuthGuard, RolesGuard)
@@ -56,5 +60,12 @@ export class AdminController {
   @Get('auctions')
   async findAllAuctions(@Query() adminAuctionsQueryDto: AdminAuctionsQueryDto) {
     return this.adminService.findAll(adminAuctionsQueryDto);
+  }
+
+  @Get('auctions/suspicious')
+  async findAllSuspiciousAuctions(
+    @Query() adminSuspiciousAuctionsQueryDto: AdminSuspiciousAuctionsQueryDto,
+  ) {
+    return this.adminService.findAllSuspicious(adminSuspiciousAuctionsQueryDto);
   }
 }
