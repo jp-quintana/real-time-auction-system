@@ -14,9 +14,7 @@ services:
         - path: ./server
           target: /app
           action: sync
-    env_file:
-      - .env
-      - ./server/.env
+    env_file: ./server/.env
     environment:
       DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       REDIS_CACHE_URL: redis://redis-cache:6379
@@ -37,7 +35,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    env_file: .env
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -49,7 +46,6 @@ services:
   redis-cache:
     image: redis:7.4-alpine
     command: redis-server --maxmemory 128mb --maxmemory-policy volatile-lru
-    env_file: .env
     ports:
       - "${REDIS_CACHE_PORT}:6379"
     # volumes:
@@ -58,7 +54,6 @@ services:
   redis-queue:
     image: redis:7.4-alpine
     command: redis-server --appendonly yes
-    env_file: .env
     ports:
       - "${REDIS_QUEUE_PORT}:6379"
     volumes:
@@ -66,7 +61,6 @@ services:
 
   redis-insight:
     image: redis/redisinsight:latest
-    env_file: .env
     ports:
       - "${REDIS_INSIGHT_PORT}:5540"
 
