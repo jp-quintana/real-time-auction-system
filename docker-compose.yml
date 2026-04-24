@@ -70,6 +70,17 @@ services:
     ports:
       - "${REDIS_INSIGHT_PORT}:5540"
 
+  k6:
+    image: grafana/k6:latest
+    profiles: [ "load" ]
+    volumes:
+      - ./load:/scripts
+    environment:
+      BASE_URL: http://server:3000
+    depends_on:
+      server:
+        condition: service_started
+
 volumes:
   # redis_cache_data:
   postgres_data:
