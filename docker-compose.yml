@@ -1,6 +1,6 @@
 name: real-time-auction-system
 services:
-  server:
+  server: &server-base
     build: ./server
     ports:
       - "3000:3000"
@@ -27,6 +27,21 @@ services:
         condition: service_started
       redis-queue:
         condition: service_started
+
+  server-internal:
+    <<: *server-base
+    ports: []
+    deploy:
+      replicas: 2
+
+  load-balancer:
+    image: nginx:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - server-internal
 
   db:
     image: postgres:16-alpine

@@ -10,6 +10,7 @@ import {
   ACCESS_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
 } from './modules/auth/constants';
+import { InstanceInterceptor } from './interceptors';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -28,6 +29,8 @@ async function bootstrap() {
     }),
   );
   app.use(cookieParser());
+
+  app.useGlobalInterceptors(new InstanceInterceptor());
 
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
