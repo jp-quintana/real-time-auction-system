@@ -19,15 +19,15 @@ events over WebSockets.
 
 ## Tech stack
 
-| Layer | Tools |
-| --- | --- |
-| API | NestJS 11, TypeScript, Swagger |
-| Database | PostgreSQL 16, Drizzle ORM, drizzle-kit |
-| Cache / realtime fan-out | Redis 7.4, ioredis, Socket.IO Redis adapter |
-| Jobs | BullMQ |
-| Mail | `@nestjs-modules/mailer`, Nodemailer test accounts in development |
-| Load testing | k6 |
-| Runtime | Docker Compose, Node 20 |
+| Layer                    | Tools                                                             |
+| ------------------------ | ----------------------------------------------------------------- |
+| API                      | NestJS 11, TypeScript, Swagger                                    |
+| Database                 | PostgreSQL 16, Drizzle ORM, drizzle-kit                           |
+| Cache / realtime fan-out | Redis 7.4, ioredis, Socket.IO Redis adapter                       |
+| Jobs                     | BullMQ                                                            |
+| Mail                     | `@nestjs-modules/mailer`, Nodemailer test accounts in development |
+| Load testing             | k6                                                                |
+| Runtime                  | Docker Compose, Node 20                                           |
 
 ## Project layout
 
@@ -76,15 +76,15 @@ The server runs database migrations on startup through `npm run start:dev`.
 
 ## Local URLs
 
-| Service | URL |
-| --- | --- |
-| API direct to main server | `http://localhost:3000/api/v1` |
-| Swagger docs | `http://localhost:3000/api/v1/docs` |
-| Nginx load-balanced API | `http://localhost:8080/api/v1` |
-| RedisInsight | `http://localhost:5541` by default |
-| PostgreSQL on host | `localhost:5433` by default |
-| Redis cache on host | `localhost:6380` by default |
-| Redis queue on host | `localhost:6381` by default |
+| Service                   | URL                                 |
+| ------------------------- | ----------------------------------- |
+| API direct to main server | `http://localhost:3000/api/v1`      |
+| Swagger docs              | `http://localhost:3000/api/v1/docs` |
+| Nginx load-balanced API   | `http://localhost:8080/api/v1`      |
+| RedisInsight              | `http://localhost:5541` by default  |
+| PostgreSQL on host        | `localhost:5433` by default         |
+| Redis cache on host       | `localhost:6380` by default         |
+| Redis queue on host       | `localhost:6381` by default         |
 
 The API adds an `X-Instance-ID` response header, which is useful when checking
 which container handled a request through the Nginx endpoint.
@@ -106,14 +106,14 @@ from `server/`, set those values yourself in `server/.env`.
 
 All REST routes are prefixed with `/api/v1`.
 
-| Area | Routes |
-| --- | --- |
-| Auth | `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh` |
-| Users | `GET /users`, `GET /users/me`, `GET /users/me/items` |
-| Items | `GET /items`, `GET /items/:id`, `POST /items`, `PATCH /items/:id` |
-| Auctions | `GET /auctions`, `GET /auctions/:id`, `POST /auctions`, `PATCH /auctions/:id`, `DELETE /auctions/:id` |
-| Bids | `POST /auctions/:auctionId/bids` |
-| Admin | `PATCH /admin/auctions/:id/freeze`, `PATCH /admin/auctions/:id/unfreeze`, `PATCH /admin/auctions/:id/cancel`, `PATCH /admin/users/:id/ban`, `PATCH /admin/users/:id/unban`, `GET /admin/auctions`, `GET /admin/auctions/suspicious` |
+| Area     | Routes                                                                                                                                                                                                                              |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth     | `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`                                                                                                                                                                     |
+| Users    | `GET /users`, `GET /users/me`, `GET /users/me/items`                                                                                                                                                                                |
+| Items    | `GET /items`, `GET /items/:id`, `POST /items`, `PATCH /items/:id`                                                                                                                                                                   |
+| Auctions | `GET /auctions`, `GET /auctions/:id`, `POST /auctions`, `PATCH /auctions/:id`, `DELETE /auctions/:id`                                                                                                                               |
+| Bids     | `POST /auctions/:auctionId/bids`                                                                                                                                                                                                    |
+| Admin    | `PATCH /admin/auctions/:id/freeze`, `PATCH /admin/auctions/:id/unfreeze`, `PATCH /admin/auctions/:id/cancel`, `PATCH /admin/users/:id/ban`, `PATCH /admin/users/:id/unban`, `GET /admin/auctions`, `GET /admin/auctions/suspicious` |
 
 Authentication is cookie-based. Successful register/login responses set
 HTTP-only access and refresh token cookies. Admin-only routes require a user
@@ -212,6 +212,5 @@ results.
 
 ## More docs
 
-- `server/README.md` currently contains the original NestJS starter notes.
 - `server/docs/auctions-gateway.spec.yaml` documents the auction gateway shape.
 - `load/README.md` documents load-test setup, scenarios, and interpretation.
