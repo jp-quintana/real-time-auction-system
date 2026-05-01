@@ -1,0 +1,55 @@
+import { relations, sql } from 'drizzle-orm';
+import { uniqueIndex } from 'drizzle-orm/pg-core';
+import { numeric } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, timestamp, pgEnum } from 'drizzle-orm/pg-core';
+import { timestamps } from 'src/common/schemas';
+import { bids } from 'src/modules/bids/schemas';
+import { items } from 'src/modules/items/schemas';
+import { users } from 'src/modules/users/schemas';
+import {
+  AUCTION_STATUS_CANCELLED,
+  AUCTION_STATUS_CLOSED,
+  AUCTION_STATUS_VALUES,
+} from '../constants';
+
+export const statusEnum = pgEnum('status', AUCTION_STATUS_VALUES);
+
+export const auctions = pgTable(
+  'auctions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    startingPrice: numeric('starting_price', {
+      precision: 10,
+      scale: 2,
+    }).notNull(),
+    startTime: timestamp('start_time').defaultNow().notNull(),
+    endTime: timestamp('end_time').notNull(),
+    status: statusEnum().default('active').notNull(),
+    itemId: uuid('item_id')
+      .references(() => items.id, { onDelete: 'cascade' })
+      .notNull(),
+    winnerId: uuid('winner_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex('auctions_one_live_per_item')
+      .on(table.itemId)
+      .where(
+        sql`${table.status} NOT IN ('${sql.raw(AUCTION_STATUS_CLOSED)}', '${sql.raw(AUCTION_STATUS_CANCELLED)}') AND ${table.deletedAt} IS NULL`,
+      ),
+  ],
+);
+
+export const auctionRelations = relations(auctions, ({ one, many }) => ({
+  item: one(items, {
+    fields: [auctions.itemId],
+    references: [items.id],
+  }),
+  winner: one(users, {
+    fields: [auctions.winnerId],
+    references: [users.id],
+  }),
+  bids: many(bids),
+}));

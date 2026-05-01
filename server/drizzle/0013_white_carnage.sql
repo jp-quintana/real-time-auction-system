@@ -1,0 +1,2 @@
+ALTER TABLE "auctions" ADD COLUMN "winner_id" uuid;--> statement-breakpoint
+ALTER TABLE "auctions" ADD CONSTRAINT "auctions_winner_id_users_id_fk" FOREIGN KEY ("winner_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
